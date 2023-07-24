@@ -1,0 +1,123 @@
+import {StyleSheet} from 'react-native';
+import {screenHeight, screenWidth} from '../Utilities/Component/Helpers';
+import {Colors} from '../Utilities/Component/Colors';
+const styles = StyleSheet.create({
+  seletxt: {
+    marginTop: 50,
+    marginBottom: 15,
+    color: 'black',
+    fontWeight: '500',
+    fontSize: 14,
+    left: 10,
+  },
+  bottom: {
+    height: 40,
+    top: 10,
+    alignSelf: 'center',
+    borderRadius: 5,
+    width: screenWidth / 1.15,
+    backgroundColor: '#0047ab',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
+  safe: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: Colors.baseColor,
+  },
+  sub: {
+    flex: 1,
+    alignSelf: 'center',
+    alignItems: 'center',
+    marginTop: 40,
+    width: screenWidth,
+    justifyContent: 'center',
+  },
+  langtxt: {
+    color: Colors.black,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modal: {
+    backgroundColor: 'white',
+    height: 150,
+    justifyContent: 'space-evenly',
+    borderRadius: 24,
+  },
+  modaltxt1: {
+    fontSize: 20,
+    alignSelf: 'center',
+    fontWeight: '600',
+  },
+  modaltxt2: {
+    fontSize: 18,
+    alignSelf: 'center',
+    fontWeight: '500',
+  },
+  modalbtn: {
+    backgroundColor: Colors.mainColor,
+    paddingHorizontal: 15,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  modalbtntxt: {
+    color: Colors.white,
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  //******* */
+  btnview: {
+    backgroundColor: Colors.white,
+    flexDirection: 'row',
+    alignSelf: 'flex-end',
+    height: 24,
+    marginTop: 20,
+    right: 15,
+    borderRadius: 19,
+  },
+  btn: {
+    height: 24,
+    borderRadius: 19,
+    width: screenWidth / 6.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  btntxt: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  title: {
+    alignSelf: 'center',
+    fontSize: screenWidth / 21,
+    fontWeight: '500',
+    marginTop: 37,
+    marginBottom: 27,
+  },
+  combtnview: {
+    backgroundColor: Colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: screenWidth / 2.6,
+    height: screenHeight / 7.5,
+    borderRadius: 6,
+    shadowColor: Colors.black,
+    shadowOpacity: 0.1,
+    shadowOffset: {width: 0, height: 0},
+  },
+  startview: {
+    height: screenHeight / 7.7,
+    backgroundColor: Colors.white,
+    width: screenWidth / 1.2,
+    alignSelf: 'center',
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'space-evenly',
+    marginTop: 22,
+    marginBottom: 20,
+    shadowColor: Colors.black,
+    shadowOpacity: 0.1,
+    shadowOffset: {width: 0, height: 0},
+  },
+});
+export default styles;
