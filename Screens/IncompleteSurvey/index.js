@@ -1,9 +1,23 @@
-import React, {useState} from 'react';
-import {View, SafeAreaView, Text, FlatList} from 'react-native';
+import React, {Component, useState} from 'react';
 import {
+  View,
+  SafeAreaView,
+  Platform,
+  LogBox,
+  Text,
+  FlatList,
+  Alert,
+} from 'react-native';
+import {
+  CommonInput,
   AppText,
+  TextBtncomponent,
+  LogoCommon,
   screenWidth,
   TouchableComponent,
+  ImageComponent,
+  Header,
+  Loadingcomponent,
   screenHeight,
   Header2,
 } from '../Utilities/Component/Helpers';
@@ -12,6 +26,7 @@ import {Colors} from '../Utilities/Component/Colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useFocusEffect} from '@react-navigation/native';
 import RNFS from 'react-native-fs';
+import {confirmButtonStyles} from 'react-native-modal-datetime-picker';
 
 const Btn = ({onPress, Text, backgroundColor}) => {
   return (
@@ -104,18 +119,25 @@ function IncompleteSurvey({navigation}) {
     }
   };
 
-  const deleteFile = async (id, form) => {
+  const deleteFile = async (id, form, dt) => {
     let subform = subforms[id];
-    let n = date + ' ' + form;
+    let n = dt ? dt + ' ' + form : date + ' ' + form;
+    dt1 = dt ? dt : date;
+
     const filePath = RNFS.DocumentDirectoryPath + `/${n}.json`; // Replace with the actual file path
+    console.log(filePath);
     try {
       await RNFS.unlink(filePath);
       console.log('File deleted successfully.');
-      let index = subforms.findIndex(n => n.date === date);
-      subforms.splice(index, 1); // Remove one element at the specified index
-      setSubforms(subforms);
-      await AsyncStorage.setItem('subform', JSON.stringify(subforms));
       getdata();
+      let index = subforms.findIndex(n => n.date === n);
+      // Remove one elemen at the specified index
+
+      if (index !== -1) {
+        subforms.splice(index, 1);
+        await AsyncStorage.setItem('subform', JSON.stringify(subforms));
+        setSubforms(subforms);
+      }
     } catch (error) {
       console.error('Error deleting file:', error);
     }
@@ -129,7 +151,11 @@ function IncompleteSurvey({navigation}) {
         const fileContent = await RNFS.readFile(path);
         const jsonData = JSON.parse(fileContent);
         array.push(jsonData);
-        console.log(array.length);
+        console.log('arrrattt', array);
+        array = array.filter(
+          (array, index, self) =>
+            index === self.findIndex(t => t.date === array.date),
+        );
         setForms(array);
         return jsonData;
       } catch (error) {
@@ -138,7 +164,14 @@ function IncompleteSurvey({navigation}) {
       }
     });
   };
-  const clickfun = id => {
+  const uploadAll = () => {
+    for (let i = 0; i <= forms.length - 1; i++) {
+      setLoading(true);
+      setDate(forms[i].date);
+      clickfun(i, forms[i].date);
+    }
+  };
+  const clickfun = (id, date) => {
     console.log('dkdkkdkeee', forms[id].data);
     let newdata = forms[id].data;
     let filterData = newdata.map(val => ({
@@ -147,10 +180,11 @@ function IncompleteSurvey({navigation}) {
       c_form_name: data.find(n => n.c_form_name === val.c_form_name)
         ?.c_route_name,
       c_form: val.c_form_name,
+      image: val?.imagesrc,
     }));
 
     console.log('filtrData', filterData);
-    getdata2(filterData, id);
+    getdata2(filterData, id, date);
     if (forms[id]?.sub) {
       let newdata1 = forms[id].sub;
       for (let i = 0; i <= newdata1.length - 1; i++) {
@@ -160,13 +194,14 @@ function IncompleteSurvey({navigation}) {
           c_form_name: data.find(n => n.c_form_name === val.c_form_name)
             ?.c_route_name,
           c_form: val.c_form_name,
+          image: val?.imagesrc,
         }));
 
-        getdata3(filterData1, id);
+        getdata3(filterData1, id, date);
       }
     }
   };
-  const getdata3 = async (data, id) => {
+  const getdata3 = async (data, id, date) => {
     setLoading(true);
     let tk = await AsyncStorage.getItem('token');
     let id1 = await AsyncStorage.getItem('Id');
@@ -178,12 +213,16 @@ function IncompleteSurvey({navigation}) {
     let raw = {};
     let formname = data[0].c_form_name;
     let form = data[0].c_form;
+
     for (let i = 0; i <= data.length - 1; i++) {
       let newk = data[i];
       let element = newk.c_dependent_target_field;
       let key = newk.c_dependent_target_field;
       if (typeof element === 'object') {
-        key = element.c_name;
+        key = element?.c_name;
+      }
+      if (newk?.image) {
+        key = newk?.image.path;
       }
       let obj = `${newk.c_field_name}`;
       raw[obj] = key ? key : null;
@@ -197,11 +236,19 @@ function IncompleteSurvey({navigation}) {
       body: raw,
       redirect: 'follow',
     };
-    fetch(`https://3r4cace.pmis.app:1937/api/add/${formname}`, requestOptions)
+    fetch(`https://3r4cace.pmis.app:1837/api/add/${formname}`, requestOptions)
       .then(response => response.json())
       .then(result => {
         setLoading(false);
-        deleteFile(id, form);
+        if (result?.result === 'success') {
+          deleteFile(id, form, date);
+        }
+
+        if (result?.message === 'Unauthorized!') {
+          Alert.alert('Your session has expired login again');
+          navigation.navigate('SignIn');
+        }
+
         console.log('resulttt', result);
       })
       .catch(error => {
@@ -209,7 +256,7 @@ function IncompleteSurvey({navigation}) {
         console.log('error', error);
       });
   };
-  const getdata2 = async (data, id) => {
+  const getdata2 = async (data, id, date) => {
     setLoading(true);
     let tk = await AsyncStorage.getItem('token');
     let id1 = await AsyncStorage.getItem('Id');
@@ -226,7 +273,10 @@ function IncompleteSurvey({navigation}) {
       let element = newk.c_dependent_target_field;
       let key = newk.c_dependent_target_field;
       if (typeof element === 'object') {
-        key = element.c_name;
+        key = element?.c_name;
+      }
+      if (newk?.image) {
+        key = newk?.image.path;
       }
       let obj = `${newk.c_field_name}`;
       raw[obj] = key ? key : null;
@@ -240,14 +290,20 @@ function IncompleteSurvey({navigation}) {
       body: raw,
       redirect: 'follow',
     };
-    fetch(`https://3r4cace.pmis.app:1937/api/add/${formname}`, requestOptions)
+    fetch(`https://3r4cace.pmis.app:1837/api/add/${formname}`, requestOptions)
       .then(response => response.json())
       .then(result => {
         setLoading(false);
         console.log('resulttt', result);
+        if (result?.result === 'success') {
+          alert(JSON.stringify(result));
+          deleteFile(id, form, date);
+        }
 
-        deleteFile(id, form);
-        alert(JSON.stringify(result));
+        if (result?.message === 'Unauthorized!') {
+          Alert.alert('Your session has expired login again');
+          navigation.navigate('SignIn');
+        }
         // setModal(true);
         // setTimeout(() => {
         //   setModal(false);
@@ -265,6 +321,10 @@ function IncompleteSurvey({navigation}) {
   };
   const render = (item, id, ite) => {
     if (item?.c_field_name) {
+      let enabled = data.find(
+        n => n.c_form_name === item.c_form_name,
+      )?.c_enable_edit;
+      console.log(enabled);
       if (item?.c_field_name === ite.data[0]?.c_field_name) {
         return (
           <View style={styles.mainview}>
@@ -293,20 +353,22 @@ function IncompleteSurvey({navigation}) {
                 Text="Sync"
                 backgroundColor={'#E50045'}
               />
-              <Btn
-                Text="Edit"
-                onPress={() => {
-                  let index = forms.findIndex(n => n.date === ite.date);
+              {enabled === 'true' && (
+                <Btn
+                  Text="Edit"
+                  onPress={() => {
+                    let index = forms.findIndex(n => n.date === ite.date);
 
-                  setids(index);
+                    setids(index);
 
-                  setDate(ite.date);
-                  let data = item;
-                  setParamdata(data);
-                  setEditmodal(true);
-                }}
-                backgroundColor={'#9FC300'}
-              />
+                    setDate(ite.date);
+                    let data = item;
+                    setParamdata(data);
+                    setEditmodal(true);
+                  }}
+                  backgroundColor={'#9FC300'}
+                />
+              )}
               <Btn
                 Text="Delete"
                 onPress={() => {
@@ -333,6 +395,25 @@ function IncompleteSurvey({navigation}) {
             navigation.navigate('Surveys');
           }}
         />
+        <View
+          style={{
+            flexDirection: 'row',
+            alignSelf: 'flex-end',
+            marginRight: 20,
+            marginTop: -30,
+            marginBottom: 15,
+          }}>
+          <TouchableComponent
+            onPress={() => {
+              uploadAll();
+            }}
+            style={styles.headrbtn}>
+            <AppText
+              style={{textAlign: 'center', color: 'white', fontSize: 16}}>
+              Upload All
+            </AppText>
+          </TouchableComponent>
+        </View>
         <View
           style={{
             width: screenWidth / 1.05,

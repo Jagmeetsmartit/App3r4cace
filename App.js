@@ -14,6 +14,7 @@ import Multiform from './Screens/Multiform';
 import PatientSurvey from './Screens/PatientSurvey';
 import EditSurvey from './Screens/EditSurvey';
 import EditForm from './Screens/EditForm';
+import Feedback from './Screens/Feedback';
 //Redux saga
 import createSagaMiddleware from 'redux-saga';
 
@@ -83,6 +84,11 @@ const App = () => {
           <Stack.Screen
             name="EditSurvey"
             component={EditSurvey}
+            options={{headerShown: false}}
+          />
+             <Stack.Screen
+            name="Feedback"
+            component={Feedback}
             options={{headerShown: false}}
           />
         </Stack.Navigator>

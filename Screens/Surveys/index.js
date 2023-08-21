@@ -9,7 +9,10 @@ import {
   Alert,
 } from 'react-native';
 import {
+  CommonInput,
+  AppText,
   TextBtncomponent,
+  LogoCommon,
   screenWidth,
   TouchableComponent,
   ImageComponent,
@@ -20,12 +23,37 @@ import styles from './style';
 LogBox.ignoreAllLogs();
 
 import RNFS from 'react-native-fs';
+import VectorIcon from '../Utilities/Component/vectorIcons';
 import Modal from 'react-native-modal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useFocusEffect} from '@react-navigation/native';
 import {Colors} from '../Utilities/Component/Colors';
 import {strEncode} from '../Utilities/Component/encrptm';
 
+const Listitem = ({onPress, title, name, gname, size}) => {
+  return (
+    <TouchableComponent
+      onPress={onPress}
+      style={{
+        flexDirection: 'row',
+        alignContent: 'center',
+        borderBottomWidth: 1,
+        alignItems: 'center',
+        borderBottomColor: 'grey',
+        width: screenWidth / 1.05,
+        paddingVertical: 8,
+      }}>
+      <VectorIcon
+        name={name}
+        size={size}
+        color={'#D2042D'}
+        groupName={gname}
+        style={{marginLeft: 15, marginRight: 8}}
+      />
+      <Text>{title}</Text>
+    </TouchableComponent>
+  );
+};
 function Surveys({navigation}) {
   const [swich, setSwich] = useState(0);
   const [logoutmodal, setLogoutmodal] = useState(false);
@@ -68,7 +96,7 @@ function Surveys({navigation}) {
     }
   };
   const createJSONFile = async (fileName, jsonData, name) => {
-    console.log('fileName', jsonData.length);
+    console.log('fileNamesss', jsonData.length, name);
     let fname = fileName;
     if (name) {
       fname = fileName + name;
@@ -76,7 +104,7 @@ function Surveys({navigation}) {
     try {
       const path = RNFS.DocumentDirectoryPath + `/${fname}.json`;
       await RNFS.writeFile(path, JSON.stringify(jsonData));
-      console.log('JSON file created successfully!');
+      console.log('JSON file created successfully!' + name);
     } catch (error) {
       console.log('Error creating JSON file:', error);
     }
@@ -85,7 +113,8 @@ function Surveys({navigation}) {
     let tk = await AsyncStorage.getItem('token');
     let Id = await AsyncStorage.getItem('Id');
     setToken(tk);
-    // setLoading(true);
+    setLoading(true);
+    console.log('tokennnn', tk);
     var myHeaders = new Headers();
     myHeaders.append('X-Access-Token', tk);
     var formdata = new FormData();
@@ -141,7 +170,9 @@ function Surveys({navigation}) {
     myHeaders.append('X-Access-Token', tk);
     let str = strEncode('view_user_wise_form_mst');
     console.log(name);
+    console.log('formname', str);
     let user = strEncode(`n_user=${id} and c_form_name='${name}'`);
+    console.log(user);
     var formdata = new FormData();
     formdata.append('t', str);
     formdata.append('whrc', user);
@@ -157,8 +188,12 @@ function Surveys({navigation}) {
       .then(response => response.json())
       .then(async result => {
         createJSONFile('NewForm', result, name);
+        console.log('NewFormssss', name);
         await AsyncStorage.setItem('Form', 'saved');
-        getdata3(result, name, i, len);
+        let arrayres = result.filter(n => n.c_type === 'select');
+        if (arrayres.length !== 0) {
+          getdata3(result, name, i, len);
+        }
       })
       .catch(error => {
         setLoading(false);
@@ -182,6 +217,7 @@ function Surveys({navigation}) {
         myHeaders.append('X-Access-Token', tk);
         console.log(
           'youuusssdddd',
+          item.c_display_name,
           item.c_select_option_table,
           strEncode(item.c_select_option_table),
         );
@@ -221,6 +257,7 @@ function Surveys({navigation}) {
             if (arrayres.length === newArray.length) {
               console.log('dkkd', inde);
               console.log('dkkd', len);
+              setLoading(false);
               if (inde === len - 1) {
                 setLoading(false);
               }
@@ -243,14 +280,14 @@ function Surveys({navigation}) {
   return (
     <View style={{backgroundColor: Colors.backcolor, flex: 1}}>
       <SafeAreaView>
-        {/* {loading && (
+        {loading && (
           <>
             <Loadingcomponent></Loadingcomponent>
             <Text>
               Do not turn off the internet or close the app, data is loading
             </Text>
           </>
-        )} */}
+        )}
         <ImageComponent
           source={require('../Utilities/Images/logoo.png')}
           style={{
@@ -270,7 +307,7 @@ function Surveys({navigation}) {
             alignSelf: 'center',
             borderRadius: 6,
           }}>
-          <View style={styles.btnview}>
+          {/* <View style={styles.btnview}>
             <TouchableComponent
               onPress={() => {
                 setSwich(0);
@@ -303,8 +340,8 @@ function Surveys({navigation}) {
                 Hindi
               </Text>
             </TouchableComponent>
-          </View>
-          <Text style={styles.title}>Please Select a Category of Survey</Text>
+          </View> */}
+          <Text style={styles.title}> Please select menu option</Text>
           <View style={{flexDirection: 'row', justifyContent: 'space-evenly'}}>
             <TouchableComponent
               style={styles.startview}
@@ -315,7 +352,7 @@ function Surveys({navigation}) {
                 source={require('../Utilities/Images/complete.png')}
                 style={{width: 42, height: 47}}
               />
-              <Text>Saved Surveys</Text>
+              <Text> Saved Data Forms</Text>
             </TouchableComponent>
           </View>
           <TouchableComponent
@@ -327,7 +364,7 @@ function Surveys({navigation}) {
               source={require('../Utilities/Images/start.png')}
               style={{width: 38, height: 50}}
             />
-            <Text>Start New Survey</Text>
+            <Text>Start a new Data Form</Text>
           </TouchableComponent>
           <TextBtncomponent
             title={'LOGOUT'}

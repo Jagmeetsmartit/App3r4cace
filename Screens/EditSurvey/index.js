@@ -1,9 +1,21 @@
-import React, {useState} from 'react';
-import {View, SafeAreaView, Text, FlatList} from 'react-native';
+import React, {Component, useState} from 'react';
+import {
+  View,
+  SafeAreaView,
+  Platform,
+  LogBox,
+  Text,
+  FlatList,
+  ScrollView,
+  Alert,
+  BackHandler
+} from 'react-native';
 import ImagePicker from 'react-native-image-crop-picker';
 import {
+  CommonInput,
   AppText,
   TextBtncomponent,
+  Header,
   Loadingcomponent,
   TouchableComponent,
   Header2,
@@ -12,15 +24,37 @@ import styles from './style';
 import {Colors} from '../Utilities/Component/Colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useFocusEffect} from '@react-navigation/native';
-import {DateInputBtn, Input} from '../Utilities/Component/Input';
+import {
+  DateInputBtn,
+  Input,
+  InputBtn,
+  InputBtn1,
+} from '../Utilities/Component/Input';
+import Modal from 'react-native-modal';
 import RBSheet from 'react-native-raw-bottom-sheet';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
-
+import {strEncode} from '../Utilities/Component/encrptm';
 import moment from 'moment';
 import RNFS from 'react-native-fs';
 import {screenHeight, screenWidth} from '../Utilities/Component/Helpers';
 import VectorIcon from '../Utilities/Component/vectorIcons';
-
+const Modl = ({isVisible, onyespress, onnopress, Title,yes,no}) => {
+  return (
+    <Modal isVisible={isVisible}>
+      <View style={styles.modal2}>
+        <Text style={styles.modaltxt2}>{Title}</Text>
+        <View style={{flexDirection: 'row', justifyContent: 'space-evenly'}}>
+          <TouchableComponent style={styles.modalbtn} onPress={onyespress}>
+            <Text style={styles.modalbtntxt}>{yes}</Text>
+          </TouchableComponent>
+          <TouchableComponent style={styles.modalbtn} onPress={onnopress}>
+            <Text style={styles.modalbtntxt}>{no}</Text>
+          </TouchableComponent>
+        </View>
+      </View>
+    </Modal>
+  );
+};
 function EditSurvey(props, {navigation}) {
   const date2 = moment(new Date()).format('YYYYMMDDhhmmss');
   const createJSONFile = async jsonData => {
@@ -37,10 +71,13 @@ function EditSurvey(props, {navigation}) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [data3, setData3] = useState([]);
+  const [gp, setGp] = useState("");
+  const [modal1, setModal1] = useState(false);
   const [drop, setDrop] = useState([]);
   const [index, setIndex] = useState('');
   const [label, setLabel] = useState('');
   const [token, setToken] = useState('');
+  const [enabled, setEnabled] = useState("false");
   const [subforms, setSubforms] = useState([]);
   const [isfiles, setIsfiles] = useState(false);
   const [date, setDate] = useState('');
@@ -48,14 +85,22 @@ function EditSurvey(props, {navigation}) {
   useFocusEffect(
     React.useCallback(() => {
       callfun();
+      BackHandler.addEventListener('hardwareBackPress', handleBackPress);
       return () => {};
     }, []),
   );
+  const handleBackPress = () => {
+
+     setModal1(true)
+    
+  };
   const callfun = async () => {
     setLoading(true);
     let hi = props.route.params.data;
     let dt = props.route.params.date;
     let name = hi[0].c_form_name;
+    let gp = await AsyncStorage.getItem('n_gp');
+    setGp(gp)
     let mdata = await AsyncStorage.getItem('Master');
     if (mdata) {
       let mdata2 = await readJSONFile('Master' + name);
@@ -64,6 +109,12 @@ function EditSurvey(props, {navigation}) {
     }
     setData(hi);
     setDate(dt);
+       let m = await AsyncStorage.getItem('mainform');
+    let res = JSON.parse(m);
+ 
+        let enabled =res.find(n => n.c_form_name === name)?.c_enable_back;
+      console.log("enabled",enabled)
+      setEnabled(enabled)
   };
   const uploadimage = index => {
     ImagePicker.openCamera({
@@ -127,8 +178,10 @@ function EditSurvey(props, {navigation}) {
           title2={item.c_display_name}
           drop={item.state}
           onPress={() => {
-            data[index].state = true;
-            setData([...data]);
+            if (item?.edit === true) {
+              data[index].state = true;
+              setData([...data]);
+            }
           }}
           onCancel={() => {
             data[index].state = !data[index].state;
@@ -151,6 +204,8 @@ function EditSurvey(props, {navigation}) {
           }
           vali={item.validation}
           valmsg={item?.valmsg}
+          edit={item?.edit}
+          help={item?.validationfl1}
         />
       );
     } else if (
@@ -170,16 +225,38 @@ function EditSurvey(props, {navigation}) {
           editable={item?.edit}
           value={item.c_dependent_target_field}
           valmsg={item?.valmsg}
+          help={item?.validationfl1}
         />
       );
     } else if (item.c_type === 'select') {
       return (
         <>
           <View style={{marginBottom: 14}}>
-            <Text style={styles.titleinput2}>{item.c_display_name}</Text>
+            <Text
+              style={{
+                ...styles.titleinput2,
+                color: item.edit ? 'blue' : 'orange',
+              }}>
+              {item.c_display_name}
+            </Text>
+            {item?.validationfl1 && (
+              <Text
+                style={{
+                  ...styles.titleinput2,
+                  color: item.edit ? 'green' : 'orange',
+                }}>
+                {item.validationfl1}
+              </Text>
+            )}
             <TouchableComponent
               style={styles.textinput2}
               onPress={() => {
+                        let parseArray;
+                if (item?.validation)
+          {
+            parseArray=JSON.parse(item.validation)
+          }
+
                 if (item?.edit === true) {
                   if (item.c_field_name === 'c_hh_id') {
                     let data = selecthhid.map(n => ({
@@ -204,7 +281,10 @@ function EditSurvey(props, {navigation}) {
                     let data2 = data3?.find(
                       n => n.key === item.c_select_option_table,
                     )?.data;
-
+if (parseArray?.validation?._filter_list?.filter_data){
+  let fieldName=parseArray?.validation?._filter_list?.filter_data?.filter_column?._field_name_1
+data2=data2.filter(n=>n.n_gp==gp)
+}
                     label = item.c_select_option_col_name;
 
                     setLabel(label);
@@ -219,7 +299,9 @@ function EditSurvey(props, {navigation}) {
                   width: screenWidth / 1.26,
                   color: item.c_dependent_target_field.c_name
                     ? Colors.black
-                    : Colors.plhdr,
+                    : item.edit
+                    ? Colors.plhdr
+                    : 'orange',
                   left: 10,
                 }}>
                 {item.c_dependent_target_field.c_name
@@ -243,7 +325,7 @@ function EditSurvey(props, {navigation}) {
                 <VectorIcon
                   name={'down'}
                   size={20}
-                  color={item.edit ? 'black' : 'grey'}
+                  color={item.edit ? 'black' : 'orange'}
                   groupName={'AntDesign'}
                 />
               )}
@@ -260,7 +342,22 @@ function EditSurvey(props, {navigation}) {
       return (
         <>
           <View style={{marginBottom: 14}}>
-            <Text style={styles.titleinput2}>{item.c_display_name}</Text>
+            <Text
+              style={{
+                ...styles.titleinput2,
+                color: item.edit ? 'black' : 'orange',
+              }}>
+              {item.c_display_name}
+            </Text>
+            {item?.validationfl1 && (
+              <Text
+                style={{
+                  ...styles.titleinput2,
+                  color: item.edit ? 'green' : 'orange',
+                }}>
+                {item.validationfl1}
+              </Text>
+            )}
             <TouchableComponent
               style={styles.textinput2}
               onPress={() => {
@@ -299,6 +396,7 @@ function EditSurvey(props, {navigation}) {
           }}
           editable={item?.edit}
           value={item.c_dependent_target_field}
+          help={item?.validationfl1}
         />
       );
     } else if (item.c_type === 'label') {
@@ -332,6 +430,7 @@ function EditSurvey(props, {navigation}) {
         <KeyboardAwareScrollView>
           <Header2
             title="Edit Survey"
+                    enabled={enabled}
             onPress={() => {
               props.navigation.goBack();
             }}
@@ -407,100 +506,103 @@ function EditSurvey(props, {navigation}) {
                 onPress={() => {
                   item.c_name = item[label];
                   data[index].c_dependent_target_field = item;
-                  if (data[index].c_field_name === 'n_member_migrated') {
-                    let parseData = JSON.parse(data[index].vali);
-                    console.log(parseData.event.disable_if.disable_fields);
-                    let field =
-                      parseData?.event?.disable_if?.disable_check?._field_1;
-                    let fieldn =
-                      parseData?.event?.disable_if?.disable_check
-                        ?._field_grater_then;
-                    let i = data.findIndex(n => n.c_field_name === field);
-                    let field2 = data[i].c_dependent_target_field;
+                  if (data[index]?.vali) {
+                    if (data[index].c_field_name === 'c_mother_occupation') {
+                      let parseData = JSON.parse(data[index].vali);
+                      console.log(parseData.event.disable_if.disable_fields);
+                      let field =
+                        parseData?.event?.disable_if?.disable_check?._field_1;
+                      let fieldn =
+                        parseData?.event?.disable_if?.disable_check
+                          ?._field_grater_then;
+                      let i = data.findIndex(n => n.c_field_name === field);
+                      let field2 = data[i].c_dependent_target_field;
 
-                    if (field2 > Number(fieldn)) {
-                      let darray = parseData.event.disable_if.disable_fields;
-                      for (let j = 0; j <= darray.length - 1; j++) {
-                        let ji = data.findIndex(
-                          n => n.c_field_name === darray[j]._field_name,
-                        );
-                        data[ji].edit = false;
-                        data[ji].valmsg = '';
-                      }
-                      console.log(true);
-                    }
-                  }
-
-                  let parseData = JSON.parse(data[index].vali);
-
-                  if (parseData?.event?.disable_if?.disable_check) {
-                    let field =
-                      parseData?.event?.disable_if?.disable_check?._field_1;
-                    let fieldn =
-                      parseData?.event?.disable_if?.disable_check
-                        ?._field_equal_to;
-                    let i = data.findIndex(n => n.c_field_name === field);
-                    let field2 = data[i]?.c_dependent_target_field?.c_name;
-                    if (field2 === fieldn) {
-                      let darray = parseData?.event?.disable_if?.disable_fields;
-                      for (let j = 0; j <= darray.length - 1; j++) {
-                        let ji = data.findIndex(
-                          n => n.c_field_name === darray[j]._field_name,
-                        );
-                        data[ji].edit = false;
-                        data[ji].valmsg = '';
-                      }
-                      console.log(true);
-                    }
-                  }
-                  if (parseData?.event?.enable_if?.enable_check) {
-                    let field =
-                      parseData?.event?.enable_if?.enable_check?._field_1;
-                    let fieldn =
-                      parseData?.event?.enable_if?.enable_check
-                        ?._field_equal_to;
-                    let i = data.findIndex(n => n.c_field_name === field);
-                    let field2 = data[i]?.c_dependent_target_field?.c_name;
-                    console.log(parseData?.event?.enable_if?.enable_fields);
-                    if (field2 === fieldn) {
-                      let darray = parseData?.event?.enable_if?.enable_fields;
-
-                      for (let j = 0; j <= darray.length - 1; j++) {
-                        let ji = data.findIndex(
-                          n => n.c_field_name === darray[j]._field_name,
-                        );
-                        data[ji].edit = true;
-                      }
-                      console.log(true);
-                    }
-                  }
-                  if (parseData?.event?.multi_enable_disable) {
-                    let schearray = parseData?.event?.multi_enable_disable;
-                    for (let s = 0; s <= schearray.length - 1; s++) {
-                      let field = schearray[s];
-                      let fieldName = field[0]?.field_name;
-                      let fieldn = field[0]?.equal_to;
-                      let i = data.findIndex(n => n.c_field_name === fieldName);
-
-                      let field2 = data[i]?.c_dependent_target_field?.c_name;
-
-                      if (fieldn === field2) {
-                        let darray = field[0]?.enable_fields;
-                        let earray = field[0]?.disable_fields;
+                      if (field2 > Number(fieldn)) {
+                        let darray = parseData.event.disable_if.disable_fields;
                         for (let j = 0; j <= darray.length - 1; j++) {
                           let ji = data.findIndex(
-                            n =>
-                              n.c_select_option_table === darray[j]._field_name,
+                            n => n.c_field_name === darray[j]._field_name,
+                          );
+                          data[ji].edit = false;
+                          data[ji].valmsg = '';
+                        }
+                        console.log(true);
+                      }
+                    }
+
+                    let parseData = JSON.parse(data[index].vali);
+
+                    if (parseData?.event?.disable_if?.disable_check) {
+                      let field =
+                        parseData?.event?.disable_if?.disable_check?._field_1;
+                      let fieldn =
+                        parseData?.event?.disable_if?.disable_check
+                          ?._field_equal_to;
+                      let i = data.findIndex(n => n.c_field_name === field);
+                      let field2 = data[i]?.c_dependent_target_field?.c_name;
+                      if (field2 === fieldn) {
+                        let darray =
+                          parseData?.event?.disable_if?.disable_fields;
+                        for (let j = 0; j <= darray.length - 1; j++) {
+                          let ji = data.findIndex(
+                            n => n.c_field_name === darray[j]._field_name,
+                          );
+                          data[ji].edit = false;
+                          data[ji].valmsg = '';
+                        }
+                        console.log(true);
+                      }
+                    }
+                    if (parseData?.event?.enable_if?.enable_check) {
+                      let field =
+                        parseData?.event?.enable_if?.enable_check?._field_1;
+                      let fieldn =
+                        parseData?.event?.enable_if?.enable_check
+                          ?._field_equal_to;
+                      let i = data.findIndex(n => n.c_field_name === field);
+                      let field2 = data[i]?.c_dependent_target_field?.c_name;
+                      console.log(parseData?.event?.enable_if?.enable_fields);
+                      if (field2 === fieldn) {
+                        let darray = parseData?.event?.enable_if?.enable_fields;
+
+                        for (let j = 0; j <= darray.length - 1; j++) {
+                          let ji = data.findIndex(
+                            n => n.c_field_name === darray[j]._field_name,
                           );
                           data[ji].edit = true;
                         }
-                        for (let e = 0; e <= earray.length - 1; e++) {
-                          let ef = data.findIndex(
-                            n =>
-                              n.c_select_option_table === earray[e]._field_name,
-                          );
+                        console.log(true);
+                      }
+                    }
+                    if (parseData?.event?.multi_enable_disable) {
+                      let schearray = parseData?.event?.multi_enable_disable;
+                      for (let s = 0; s <= schearray.length - 1; s++) {
+                        let field = schearray[s];
+                        let fieldName = field[0]?.field_name;
+                        let fieldn = field[0]?.equal_to;
+                        let i = data.findIndex(
+                          n => n.c_field_name === fieldName,
+                        );
 
-                          data[ef].edit = false;
+                        let field2 = data[i]?.c_dependent_target_field?.c_name;
+
+                        if (fieldn === field2) {
+                          let darray = field[0]?.enable_fields;
+                          let earray = field[0]?.disable_fields;
+                          for (let j = 0; j <= darray.length - 1; j++) {
+                            let ji = data.findIndex(
+                              n => n.c_field_name === darray[j]._field_name,
+                            );
+                            data[ji].edit = true;
+                          }
+                          for (let e = 0; e <= earray.length - 1; e++) {
+                            let ef = data.findIndex(
+                              n => n.c_field_name === earray[e]._field_name,
+                            );
+
+                            data[ef].edit = false;
+                          }
                         }
                       }
                     }
@@ -520,6 +622,19 @@ function EditSurvey(props, {navigation}) {
             )}
           />
         </RBSheet>
+            <Modl
+          isVisible={modal1}
+          yes="Yes"
+          no="No"
+          onyespress={async () => {
+            setModal1(false);
+     navigation.goBack();
+          }}
+          onnopress={() => {
+            setModal1(false);
+          }}
+          Title={'Are you sure you want to leave this page, data will be lost if you will leave this page'}
+        />
       </SafeAreaView>
     </View>
   );

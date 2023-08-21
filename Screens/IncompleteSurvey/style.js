@@ -16,6 +16,15 @@ const styles = StyleSheet.create({
     height: 106,
     marginBottom: 14,
   },
+    headrbtn: {
+    height: 24,
+    width: 90,
+    alignSelf: 'center',
+    marginRight: 10,
+    justifyContent: 'center',
+    backgroundColor: Colors.mainColor,
+    borderRadius: 13,
+  },
   modal: {
     backgroundColor: 'white',
     height: 60,

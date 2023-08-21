@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>App3r4cace</string>
+	<string>3r4cace</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -35,14 +35,45 @@
 			</dict>
 		</dict>
 	</dict>
-<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Aspire requires this permission to upload location of survey.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>3r4cace requires this permission to upload location of survey.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Aspire requires this permission to upload location of survey.</string>
-		<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Aspire requires this permission to upload Images</string>
+	<string>3r4cace requires this permission to upload location of survey.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>3r4cace requires this permission to upload Images.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>3r4cace requires this permission to upload Images</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Aspire requires this permission to upload Images.</string>
+	<string>3r4cace requires this permission to upload Images.</string>
+		<key>UIAppFonts</key>
+	<array>
+		<string>AntDesign.ttf</string>
+		<string>Entypo.ttf</string>
+		<string>EvilIcons.ttf</string>
+		<string>Feather.ttf</string>
+		<string>FontAwesome.ttf</string>
+		<string>FontAwesome5_Brands.ttf</string>
+		<string>FontAwesome5_Regular.ttf</string>
+		<string>FontAwesome5_Solid.ttf</string>
+		<string>Fontisto.ttf</string>
+		<string>Foundation.ttf</string>
+		<string>Ionicons.ttf</string>
+		<string>MaterialCommunityIcons.ttf</string>
+		<string>MaterialIcons.ttf</string>
+		<string>Octicons.ttf</string>
+		<string>SimpleLineIcons.ttf</string>
+		<string>Zocial.ttf</string>
+		<string>Manjari-Bold.ttf</string>
+		<string>Manjari-Regular.ttf</string>
+		<string>Manrope-Bold.ttf</string>
+		<string>Manrope-ExtraBold.ttf</string>
+		<string>Manrope-ExtraLight.ttf</string>
+		<string>Manrope-Light.ttf</string>
+		<string>Manrope-Medium.ttf</string>
+		<string>Manrope-Regular.ttf</string>
+		<string>Manrope-SemiBold.ttf</string>
+		<string>PoetsenOne-Regular.ttf</string>
+	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIRequiredDeviceCapabilities</key>

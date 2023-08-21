@@ -32,17 +32,7 @@ function SurveyList(props) {
   useFocusEffect(
     React.useCallback(() => {
       getdata1();
-      console.log('hhhhhhss  ', strEncode('view_user_wise_forms'));
-      console.log('hhhhhhuser  ', strEncode('n_user=3'));
-      console.log(strEncode('view_user_wise_form_mst'));
-      console.log(
-        'hhhhhhuser2  ',
-        strEncode("n_user=3 and c_form_name='House Hold Survey'"),
-      );
-      console.log(
-        'hhhhhhuser2dd  ',
-        strEncode("n_user=3 and c_form_name='HH Survey Family Members'"),
-      );
+
       checkadd();
       return () => {};
     }, []),
@@ -159,6 +149,7 @@ function SurveyList(props) {
   const getdata1 = async () => {
     let m = await AsyncStorage.getItem('mainform');
     let res = JSON.parse(m);
+    console.log('hhhhh', res);
     setData(res);
   };
 
@@ -167,7 +158,7 @@ function SurveyList(props) {
       <SafeAreaView>
         {loading && <Loadingcomponent></Loadingcomponent>}
         <Header2
-          title="Survey List"
+          title=" Data Forms"
           onPress={() => {
             props.navigation.goBack();
           }}
@@ -181,6 +172,37 @@ function SurveyList(props) {
             borderRadius: 6,
             paddingTop: 10,
           }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+
+              //  width: screenWidth /2,
+              //  marginLeft:screenWidth/2.5,
+            }}>
+            <Text
+              style={{
+                color: Colors.red,
+                fontWeight: '600',
+                fontSize: 15,
+                width: screenWidth / 1.8,
+                marginLeft: 30,
+              }}>
+              Name
+            </Text>
+            <Text
+              style={{
+                color: Colors.red,
+                fontWeight: '600',
+                fontSize: 15,
+              }}>
+              Edit
+            </Text>
+            <Text
+              style={{color: Colors.red, fontWeight: '500', marginRight: 30}}>
+              Back
+            </Text>
+          </View>
           <FlatList
             data={data}
             renderItem={({item}) => (
@@ -214,11 +236,15 @@ function SurveyList(props) {
                       color: Colors.black,
                       fontWeight: '600',
                       fontSize: 15,
+                      width: screenWidth / 1.8,
                     }}>
                     {item.c_form_name}
                   </Text>
                   <Text style={{color: Colors.black, fontWeight: '500'}}>
-                    {item.length}
+                    {item.c_enable_edit}
+                  </Text>
+                  <Text style={{color: Colors.black, fontWeight: '500'}}>
+                    {item.c_enable_back}
                   </Text>
                 </View>
               </TouchableComponent>

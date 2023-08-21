@@ -41,19 +41,25 @@ export function Input({
   onBlur,
   defaultValue,
   autoComplete,
+  help,
 }) {
   return (
     <View style={{marginBottom: 14}}>
-      <Text style={{...styles.titleinput, color: editable ? 'blue' : 'grey'}}>
+      <Text style={{...styles.titleinput, color: editable ? 'blue' : 'orange'}}>
         {title2}
       </Text>
-
+      {help && (
+        <Text
+          style={{...styles.titleinput, color: editable ? 'green' : 'orange'}}>
+          {help}
+        </Text>
+      )}
       <TextInput
         underlineColorAndroid="transparent"
-        style={{...styles.textinput, color: editable ? 'black' : 'grey'}}
+        style={{...styles.textinput, color: editable ? 'black' : 'orange'}}
         onChangeText={onChangeText}
         value={value}
-        placeholderTextColor={editable ? 'black' : 'grey'}
+        placeholderTextColor={editable ? 'black' : 'orange'}
         placeholder={placeholder}
         keyboardType={keyboardType}
         maxLength={maxLength}
@@ -144,6 +150,14 @@ export const InputBtn = ({
     </View>
   );
 };
+function isValidJSON(jsonString) {
+  try {
+    JSON.parse(jsonString);
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
 export function DateInputBtn({
   drop,
   vali,
@@ -158,34 +172,54 @@ export function DateInputBtn({
   onCancel,
   onConfirm,
   color,
+  edit,
+  help,
 }) {
   let maxDate = new Date();
   let minDate = new Date('2020-05-23');
-  let valid = JSON.parse(vali);
-  if (valid?.validation?.date_range?.validation_check) {
-    maxDate =
-      valid?.validation?.date_range?.validation_check?.upto === 'CURRENT_DATE'
-        ? new Date()
-        : new Date(valid?.validation.date_range?.validation_check?.upto);
-    minDate = new Date(valid?.validation.date_range?.validation_check?.from);
+
+  if (vali) {
+    let valid;
+    if (isValidJSON(vali) === true) {
+      valid = JSON.parse(vali);
+    }
+
+    if (valid?.validation?.date_range?.validation_check) {
+      maxDate =
+        valid?.validation?.date_range?.validation_check?.upto === 'CURRENT_DATE'
+          ? new Date()
+          : new Date(valid?.validation.date_range?.validation_check?.upto);
+      minDate = new Date(valid?.validation.date_range?.validation_check?.from);
+    }
   }
   return (
     <View style={{marginBottom: 14}}>
-      <Text style={styles.titleinput2}>{title2}</Text>
+      <Text style={{...styles.titleinput2, color: edit ? 'blue' : 'orange'}}>
+        {title2}
+      </Text>
+      {help && (
+        <Text
+          style={{...styles.titleinput2, color: editable ? 'green' : 'orange'}}>
+          {help}
+        </Text>
+      )}
       <TouchableComponent style={styles.textinput2} onPress={onPress}>
-        <Text style={{width: screenWidth / 1.26, color: color}}>{text}</Text>
+        <Text
+          style={{width: screenWidth / 1.26, color: edit ? 'black' : 'orange'}}>
+          {text}
+        </Text>
         {drop ? (
           <VectorIcon
             name={'up'}
             size={20}
-            color={Colors.black}
+            color={edit ? Colors.black : 'orange'}
             groupName={'AntDesign'}
           />
         ) : (
           <VectorIcon
             name={'down'}
             size={20}
-            color={Colors.black}
+            color={edit ? Colors.black : 'orange'}
             groupName={'AntDesign'}
           />
         )}

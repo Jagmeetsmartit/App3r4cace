@@ -1,15 +1,20 @@
-import React, {useState} from 'react';
+import React, {Component, useState} from 'react';
 import {
   View,
   SafeAreaView,
   Platform,
+  LogBox,
   Text,
   FlatList,
+  ScrollView,
   Alert,
+  BackHandler,
 } from 'react-native';
 import {
+  CommonInput,
   AppText,
   TextBtncomponent,
+  Header,
   Loadingcomponent,
   TouchableComponent,
   Header2,
@@ -20,12 +25,17 @@ import Geolocation from '@react-native-community/geolocation';
 import {request, PERMISSIONS, check, RESULTS} from 'react-native-permissions';
 import {Colors} from '../Utilities/Component/Colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useFocusEffect} from '@react-navigation/native';
-import {DateInputBtn, Input} from '../Utilities/Component/Input';
+import {TabRouter, useFocusEffect} from '@react-navigation/native';
+import {
+  DateInputBtn,
+  Input,
+  InputBtn,
+  InputBtn1,
+} from '../Utilities/Component/Input';
 import ImagePicker from 'react-native-image-crop-picker';
 import RBSheet from 'react-native-raw-bottom-sheet';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
-
+import {strEncode} from '../Utilities/Component/encrptm';
 import moment from 'moment';
 import RNFS from 'react-native-fs';
 import {screenHeight, screenWidth} from '../Utilities/Component/Helpers';
@@ -83,6 +93,7 @@ function MemberSurvey({navigation, route}) {
   const [index, setIndex] = useState('');
   const [btn, setBtn] = useState();
   const [time, setTime] = useState();
+  const [modal1, setModal1] = useState(false);
   const [farray1, setfarray1] = useState([]);
   const [farray, setfarray] = useState([]);
   const [first, setFirst] = useState(false);
@@ -92,6 +103,7 @@ function MemberSurvey({navigation, route}) {
   const [modal, setModal] = useState(false);
   const [token, setToken] = useState('');
   const [subforms, setSubforms] = useState([]);
+  const [enabled, setEnabled] = useState('false');
   const [isfiles, setIsfiles] = useState(false);
   const rbsheet = React.useRef();
   useFocusEffect(
@@ -103,11 +115,23 @@ function MemberSurvey({navigation, route}) {
           setFirst(true);
         }
       }
-
+      getEnable();
       checkadd();
+      BackHandler.addEventListener('hardwareBackPress', handleBackPress);
       return () => {};
     }, []),
   );
+  const handleBackPress = () => {
+    setModal1(true);
+  };
+  const getEnable = async () => {
+    let m = await AsyncStorage.getItem('mainform');
+    let res = JSON.parse(m);
+    let name = route.params.name;
+    let enableds = res.find(n => n.c_form_name === name)?.c_enable_back;
+    console.log('enabled', enableds);
+    setEnabled(enabled);
+  };
   const checkadd = () => {
     setTimeout(() => {
       if (Platform.OS === 'android') {
@@ -457,8 +481,10 @@ function MemberSurvey({navigation, route}) {
           title2={item.c_display_name}
           drop={item.state}
           onPress={() => {
-            data[index].state = true;
-            setData([...data]);
+            if (item?.edit === true) {
+              data[index].state = true;
+              setData([...data]);
+            }
           }}
           onCancel={() => {
             data[index].state = !data[index].state;
@@ -481,6 +507,8 @@ function MemberSurvey({navigation, route}) {
           }
           vali={item.vali}
           valmsg={item?.valmsg}
+          edit={item?.edit}
+          help={item?.validationfl1}
         />
       );
     } else if (
@@ -501,6 +529,7 @@ function MemberSurvey({navigation, route}) {
           value={item.c_dependent_target_field}
           valmsg={item?.valmsg}
           vali={item.vali}
+          help={item?.validationfl1}
         />
       );
     } else if (item.c_type === 'select') {
@@ -510,10 +539,19 @@ function MemberSurvey({navigation, route}) {
             <Text
               style={{
                 ...styles.titleinput2,
-                color: item.edit ? 'blue' : 'grey',
+                color: item.edit ? 'blue' : 'orange',
               }}>
               {item.c_display_name}
             </Text>
+            {item?.validationfl1 && (
+              <Text
+                style={{
+                  ...styles.titleinput2,
+                  color: item.edit ? 'green' : 'orange',
+                }}>
+                {item.validationfl1}
+              </Text>
+            )}
             <TouchableComponent
               style={styles.textinput2}
               onPress={() => {
@@ -556,7 +594,9 @@ function MemberSurvey({navigation, route}) {
                   width: screenWidth / 1.26,
                   color: item.c_dependent_target_field.c_name
                     ? Colors.black
-                    : Colors.plhdr,
+                    : item.edit
+                    ? Colors.plhdr
+                    : 'orange',
                   left: 10,
                 }}>
                 {item.c_dependent_target_field.c_name
@@ -580,7 +620,7 @@ function MemberSurvey({navigation, route}) {
                 <VectorIcon
                   name={'down'}
                   size={20}
-                  color={item.edit ? 'black' : 'grey'}
+                  color={item.edit ? 'black' : 'orange'}
                   groupName={'AntDesign'}
                 />
               )}
@@ -597,7 +637,22 @@ function MemberSurvey({navigation, route}) {
       return (
         <>
           <View style={{marginBottom: 14}}>
-            <Text style={styles.titleinput2}>{item.c_display_name}</Text>
+            <Text
+              style={{
+                ...styles.titleinput2,
+                color: item.edit ? 'black' : 'orange',
+              }}>
+              {item.c_display_name}
+            </Text>
+            {item?.validationfl1 && (
+              <Text
+                style={{
+                  ...styles.titleinput2,
+                  color: item.edit ? 'green' : 'orange',
+                }}>
+                {item.validationfl1}
+              </Text>
+            )}
             <TouchableComponent
               style={styles.textinput2}
               onPress={() => {
@@ -659,6 +714,7 @@ function MemberSurvey({navigation, route}) {
           value={item.c_dependent_target_field}
           valmsg={item?.valmsg}
           vali={item.vali}
+          help={item?.validationfl1}
         />
       );
     }
@@ -671,6 +727,7 @@ function MemberSurvey({navigation, route}) {
         <KeyboardAwareScrollView>
           <Header2
             title="Survey Form"
+            enabled={enabled}
             onPress={() => {
               navigation.goBack();
             }}
@@ -727,98 +784,101 @@ function MemberSurvey({navigation, route}) {
                   item.c_name = item[label];
                   data[index].c_dependent_target_field = item;
                   console.log(data[index].c_dependent_target_field);
-                  if (data[index].c_field_name === 'n_member_migrated') {
-                    let parseData = JSON.parse(data[index].vali);
-                    console.log(parseData.event.disable_if.disable_fields);
-                    let field =
-                      parseData?.event?.disable_if?.disable_check?._field_1;
-                    let fieldn =
-                      parseData?.event?.disable_if?.disable_check
-                        ?._field_grater_then;
-                    let i = data.findIndex(n => n.c_field_name === field);
-                    let field2 = data[i].c_dependent_target_field;
+                  if (data[index]?.vali) {
+                    if (data[index].c_field_name === 'c_mother_occupation') {
+                      let parseData = JSON.parse(data[index].vali);
+                      console.log(parseData.event.disable_if.disable_fields);
+                      let field =
+                        parseData?.event?.disable_if?.disable_check?._field_1;
+                      let fieldn =
+                        parseData?.event?.disable_if?.disable_check
+                          ?._field_grater_then;
+                      let i = data.findIndex(n => n.c_field_name === field);
+                      let field2 = data[i].c_dependent_target_field;
 
-                    if (field2 > Number(fieldn)) {
-                      let darray = parseData.event.disable_if.disable_fields;
-                      for (let j = 0; j <= darray.length - 1; j++) {
-                        let ji = data.findIndex(
-                          n => n.c_field_name === darray[j]._field_name,
-                        );
-                        data[ji].edit = false;
-                      }
-                      console.log(true);
-                    }
-                  }
-                  let parseData = JSON.parse(data[index].vali);
-
-                  if (parseData?.event?.disable_if?.disable_check) {
-                    let field =
-                      parseData?.event?.disable_if?.disable_check?._field_1;
-                    let fieldn =
-                      parseData?.event?.disable_if?.disable_check
-                        ?._field_equal_to;
-                    let i = data.findIndex(n => n.c_field_name === field);
-                    let field2 = data[i]?.c_dependent_target_field?.c_name;
-                    if (field2 === fieldn) {
-                      let darray = parseData?.event?.disable_if?.disable_fields;
-                      for (let j = 0; j <= darray.length - 1; j++) {
-                        let ji = data.findIndex(
-                          n => n.c_field_name === darray[j]._field_name,
-                        );
-                        data[ji].edit = false;
-                        data[ji].valmsg = '';
-                      }
-                      console.log(true);
-                    }
-                  }
-                  if (parseData?.event?.enable_if?.enable_check) {
-                    let field =
-                      parseData?.event?.enable_if?.enable_check?._field_1;
-                    let fieldn =
-                      parseData?.event?.enable_if?.enable_check
-                        ?._field_equal_to;
-                    let i = data.findIndex(n => n.c_field_name === field);
-                    let field2 = data[i]?.c_dependent_target_field?.c_name;
-                    console.log(parseData?.event?.enable_if?.enable_fields);
-                    if (field2 === fieldn) {
-                      let darray = parseData?.event?.enable_if?.enable_fields;
-
-                      for (let j = 0; j <= darray.length - 1; j++) {
-                        let ji = data.findIndex(
-                          n => n.c_field_name === darray[j]._field_name,
-                        );
-                        data[ji].edit = true;
-                      }
-                      console.log(true);
-                    }
-                  }
-                  if (parseData?.event?.multi_enable_disable) {
-                    let schearray = parseData?.event?.multi_enable_disable;
-                    for (let s = 0; s <= schearray.length - 1; s++) {
-                      let field = schearray[s];
-                      let fieldName = field[0]?.field_name;
-                      let fieldn = field[0]?.equal_to;
-                      let i = data.findIndex(n => n.c_field_name === fieldName);
-
-                      let field2 = data[i]?.c_dependent_target_field?.c_name;
-
-                      if (fieldn === field2) {
-                        let darray = field[0]?.enable_fields;
-                        let earray = field[0]?.disable_fields;
+                      if (field2 > Number(fieldn)) {
+                        let darray = parseData.event.disable_if.disable_fields;
                         for (let j = 0; j <= darray.length - 1; j++) {
                           let ji = data.findIndex(
-                            n =>
-                              n.c_select_option_table === darray[j]._field_name,
+                            n => n.c_field_name === darray[j]._field_name,
+                          );
+                          data[ji].edit = false;
+                        }
+                        console.log(true);
+                      }
+                    }
+                    let parseData = JSON.parse(data[index].vali);
+
+                    if (parseData?.event?.disable_if?.disable_check) {
+                      let field =
+                        parseData?.event?.disable_if?.disable_check?._field_1;
+                      let fieldn =
+                        parseData?.event?.disable_if?.disable_check
+                          ?._field_equal_to;
+                      let i = data.findIndex(n => n.c_field_name === field);
+                      let field2 = data[i]?.c_dependent_target_field?.c_name;
+                      if (field2 === fieldn) {
+                        let darray =
+                          parseData?.event?.disable_if?.disable_fields;
+                        for (let j = 0; j <= darray.length - 1; j++) {
+                          let ji = data.findIndex(
+                            n => n.c_field_name === darray[j]._field_name,
+                          );
+                          data[ji].edit = false;
+                          data[ji].valmsg = '';
+                        }
+                        console.log(true);
+                      }
+                    }
+                    if (parseData?.event?.enable_if?.enable_check) {
+                      let field =
+                        parseData?.event?.enable_if?.enable_check?._field_1;
+                      let fieldn =
+                        parseData?.event?.enable_if?.enable_check
+                          ?._field_equal_to;
+                      let i = data.findIndex(n => n.c_field_name === field);
+                      let field2 = data[i]?.c_dependent_target_field?.c_name;
+                      console.log(parseData?.event?.enable_if?.enable_fields);
+                      if (field2 === fieldn) {
+                        let darray = parseData?.event?.enable_if?.enable_fields;
+
+                        for (let j = 0; j <= darray.length - 1; j++) {
+                          let ji = data.findIndex(
+                            n => n.c_field_name === darray[j]._field_name,
                           );
                           data[ji].edit = true;
                         }
-                        for (let e = 0; e <= earray.length - 1; e++) {
-                          let ef = data.findIndex(
-                            n =>
-                              n.c_select_option_table === earray[e]._field_name,
-                          );
+                        console.log(true);
+                      }
+                    }
+                    if (parseData?.event?.multi_enable_disable) {
+                      let schearray = parseData?.event?.multi_enable_disable;
+                      for (let s = 0; s <= schearray.length - 1; s++) {
+                        let field = schearray[s];
+                        let fieldName = field[0]?.field_name;
+                        let fieldn = field[0]?.equal_to;
+                        let i = data.findIndex(
+                          n => n.c_field_name === fieldName,
+                        );
 
-                          data[ef].edit = false;
+                        let field2 = data[i]?.c_dependent_target_field?.c_name;
+
+                        if (fieldn === field2) {
+                          let darray = field[0]?.enable_fields;
+                          let earray = field[0]?.disable_fields;
+                          for (let j = 0; j <= darray.length - 1; j++) {
+                            let ji = data.findIndex(
+                              n => n.c_field_name === darray[j]._field_name,
+                            );
+                            data[ji].edit = true;
+                          }
+                          for (let e = 0; e <= earray.length - 1; e++) {
+                            let ef = data.findIndex(
+                              n => n.c_field_name === earray[e]._field_name,
+                            );
+
+                            data[ef].edit = false;
+                          }
                         }
                       }
                     }
@@ -840,43 +900,30 @@ function MemberSurvey({navigation, route}) {
         </RBSheet>
         <Modl
           isVisible={modal}
+          yes="Okay"
+          no="Cancel"
           onyespress={async () => {
             setModal(false);
-            // let newarray = [];
-            // let array = {
-            //   data: data,
-            //   date: date2,
-            // };
-            // let date = {
-            //   date: date2,
-            // };
-            // newarray.push(date);
-            // let arrays = subforms.concat(newarray);
-            // setSubforms(arrays);
-
-            // if (time) {
-            //   if (time !== 1) {
-            //     setTime(time - 1);
-            //     let num = Number(route.params.times) + 1 - time;
-            //     Alert.alert(`Saved form for family member ${num}`);
-            //     getdata();
-            //     setfarray([...farray, ...farray1]);
-            //   } else {
-            //     navigation.navigate('Surveys');
-            //     await AsyncStorage.setItem('subform', JSON.stringify(arrays));
-            //     await AsyncStorage.setItem('hhid', JSON.stringify(selecthhid));
-            //     createJSONFile(date.date, array);
-            //   }
-            // } else {
-            //   navigation.navigate('Surveys');
-            //   await AsyncStorage.setItem('subform', JSON.stringify(arrays));
-            //   createJSONFile(date.date, array);
-            // }
           }}
           onnopress={() => {
             setModal(false);
           }}
           Title={'Please add all the mandatory details'}
+        />
+        <Modl
+          isVisible={modal1}
+          yes="Yes"
+          no="No"
+          onyespress={async () => {
+            setModal1(false);
+            navigation.goBack();
+          }}
+          onnopress={() => {
+            setModal1(false);
+          }}
+          Title={
+            'Are you sure you want to leave this page, data will be lost if you will leave this page'
+          }
         />
       </SafeAreaView>
     </View>

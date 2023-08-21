@@ -61,14 +61,13 @@ function Loading({navigation}) {
           3r4cace
         </AppText>
       </TouchableComponent>
-
       <TouchableComponent
         onPress={() => {
           checkdata();
         }}
         style={{
           height: 45,
-          marginTop: screenHeight / 5,
+          marginTop: screenHeight / 6,
           alignSelf: 'center',
           borderRadius: 24,
           width: screenWidth / 1.2,
@@ -84,7 +83,32 @@ function Loading({navigation}) {
             textAlign: 'center',
             fontSize: 18,
           }}>
-          Public Form
+          User Login
+        </AppText>
+      </TouchableComponent>
+      <TouchableComponent
+        onPress={() => {
+          navigation.navigate('Feedback');
+        }}
+        style={{
+          height: 45,
+          marginTop: 40,
+          alignSelf: 'center',
+          borderRadius: 24,
+          width: screenWidth / 1.2,
+          backgroundColor: Colors.backcolor,
+          justifyContent: 'center',
+          marginBottom: 10,
+        }}
+        activeOpacity={1}>
+        <AppText
+          style={{
+            color: 'white',
+            // fontFamily: 'SFProDisplay-Regular',
+            textAlign: 'center',
+            fontSize: 18,
+          }}>
+          Community Feedback
         </AppText>
       </TouchableComponent>
     </SafeAreaView>

@@ -6,11 +6,15 @@ import {
   LogBox,
   Text,
   FlatList,
+  ScrollView,
   Alert,
+  BackHandler,
 } from 'react-native';
 import {
+  CommonInput,
   AppText,
   TextBtncomponent,
+  Header,
   Loadingcomponent,
   TouchableComponent,
   Header2,
@@ -21,8 +25,13 @@ import Geolocation from '@react-native-community/geolocation';
 import {request, PERMISSIONS, check, RESULTS} from 'react-native-permissions';
 import {Colors} from '../Utilities/Component/Colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useFocusEffect} from '@react-navigation/native';
-import {DateInputBtn, Input} from '../Utilities/Component/Input';
+import {TabRouter, useFocusEffect} from '@react-navigation/native';
+import {
+  DateInputBtn,
+  Input,
+  InputBtn,
+  InputBtn1,
+} from '../Utilities/Component/Input';
 import ImagePicker from 'react-native-image-crop-picker';
 import RBSheet from 'react-native-raw-bottom-sheet';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
@@ -31,7 +40,7 @@ import moment from 'moment';
 import RNFS from 'react-native-fs';
 import {screenHeight, screenWidth} from '../Utilities/Component/Helpers';
 import VectorIcon from '../Utilities/Component/vectorIcons';
-const Modl = ({isVisible, onyespress, onnopress, Title}) => {
+const Modl = ({isVisible, onyespress, onnopress, Title, yes, no}) => {
   return (
     <Modal isVisible={isVisible}>
       <View style={styles.modal2}>
@@ -42,10 +51,10 @@ const Modl = ({isVisible, onyespress, onnopress, Title}) => {
         <Text style={styles.modaltxt2}>{Title}</Text>
         <View style={{flexDirection: 'row', justifyContent: 'space-evenly'}}>
           <TouchableComponent style={styles.modalbtn} onPress={onyespress}>
-            <Text style={styles.modalbtntxt}>Okay</Text>
+            <Text style={styles.modalbtntxt}>{yes}</Text>
           </TouchableComponent>
           <TouchableComponent style={styles.modalbtn} onPress={onnopress}>
-            <Text style={styles.modalbtntxt}>Cancel</Text>
+            <Text style={styles.modalbtntxt}>{no}</Text>
           </TouchableComponent>
         </View>
       </View>
@@ -63,13 +72,19 @@ function MemberSurvey({navigation, route}) {
       console.log('Error creating JSON file:', error);
     }
   };
+  const [gp, setGp] = useState('');
   const [data, setData] = useState([]);
+  const [fieldn, setfieldn] = useState();
+  const [arrayname, setArrayname] = useState('');
+  const [enabled, setEnabled] = useState('false');
   const [selecthhid, setSelecthhid] = useState([]);
+  const [name, setName] = useState('');
   const [subb, setsub] = useState([]);
   const [loading, setLoading] = useState(false);
   const [data3, setData3] = useState([]);
   const [drop, setDrop] = useState([]);
   const [index, setIndex] = useState('');
+  const [modal1, setModal1] = useState(false);
   const [btn, setBtn] = useState();
   const [time, setTime] = useState();
   const [farray1, setfarray1] = useState([]);
@@ -93,10 +108,14 @@ function MemberSurvey({navigation, route}) {
         }
       }
       getdata();
+      BackHandler.addEventListener('hardwareBackPress', handleBackPress);
       checkadd();
       return () => {};
     }, []),
   );
+  const handleBackPress = () => {
+    setModal1(true);
+  };
   const checkadd = () => {
     setTimeout(() => {
       if (Platform.OS === 'android') {
@@ -230,22 +249,20 @@ function MemberSurvey({navigation, route}) {
     } catch (error) {
       setLoading(false);
       console.log('Error reading JSON file:', error);
-      return null;
+      return [];
     }
   };
   const getdata = async () => {
     setLoading(true);
     console.log(route.params.name);
     if (route?.params?.hhid) {
-      let data = await AsyncStorage.getItem('hhid');
+      // let data = await AsyncStorage.getItem('hhid');
 
-      if (data) {
-        let pdata = JSON.parse(data);
-        setSelecthhid([...route?.params?.hhid, ...pdata]);
-      } else {
-        setSelecthhid(route?.params?.hhid);
-      }
+      setSelecthhid(route?.params?.hhid);
+      setArrayname(route?.params?.arrayname);
     }
+    let gp = await AsyncStorage.getItem('n_gp');
+    setGp(gp);
     let mdata = await AsyncStorage.getItem('Master');
     let data21 = await readJSONFile('NewForm' + route.params.name);
     var plaintext1 = await readJSONFile('Master' + route.params.name);
@@ -282,6 +299,16 @@ function MemberSurvey({navigation, route}) {
         if (vali) {
           const date2 = moment(new Date()).format('YYYY-MM-DD hh:mm:ss');
           let valid = isValidJSON(vali) ? JSON.parse(vali) : '';
+          console.log(valid?.event);
+          if (
+            valid?.validation?.get_data?.get_array?.array_name ===
+            route?.params?.arrayname
+          ) {
+            datap[i].c_dependent_target_field = {
+              c_name: route?.params?.hhid[0],
+            };
+            datap[i].c_type = 'select';
+          }
           if (valid?.event?.get_fill_color) {
             console.log('dkkddk', valid?.event?.get_fill_color);
             datap[i].color = valid?.event?.get_fill_color._fill_font._get_color;
@@ -353,6 +380,12 @@ function MemberSurvey({navigation, route}) {
       setData(datap);
       setData3(plaintext1);
       setLoading(false);
+      let m = await AsyncStorage.getItem('mainform');
+      let res = JSON.parse(m);
+      let name = route.params.name;
+      let enabled = res.find(n => n.c_form_name === name)?.c_enable_back;
+      console.log('enabled', enabled);
+      setEnabled(enabled);
     }
 
     let subform = await AsyncStorage.getItem('subform');
@@ -364,95 +397,13 @@ function MemberSurvey({navigation, route}) {
     }
     checkFilesInDirectory();
   };
-  const getdata2 = async () => {
-    setLoading(true);
-    let tk = await AsyncStorage.getItem('token');
-    setToken(tk);
-    var myHeaders = new Headers();
-    myHeaders.append('X-Access-Token', tk);
 
-    var formdata = new FormData();
-    formdata.append(
-      't',
-      ' VTFZVEpXV0U1WGFHbFdNbmh4VjBSS1lXUnRUblJOVjFwcFYwVTBkMWwzUFQxU2VnPT1SbmQ=WmVr',
-    );
-    formdata.append(
-      'whrc',
-      ' UkxZekZ3VjA5WVZscFdla1p6VTFWUmQxb3diM3BSYmxKb1YwVTFiVmxWWkc5bGJWSlpVMnBLWVZkSGVHMVpiR2hQVFVWd05WRnJTbFZoTVVadVdXMTNOV1Z0VWtoU2FrSnJWMFV4YmxWR1RrSmtNR3hHVDFaT1UxSldXbFJUVlZaTFYydHNTRTVYV21wTmJGbzBXa1prVjJSV2EzbFdWMlJhVFZRPWEzZA==WFZt',
-    );
-
-    var requestOptions = {
-      method: 'POST',
-      headers: myHeaders,
-      body: formdata,
-      redirect: 'follow',
-    };
-
-    fetch('https://3r4cace.pmis.app:1937/api/custom/selectall', requestOptions)
-      .then(response => response.json())
-      .then(async result => {
-        let res = result.map(e => ({
-          ...e,
-          state: false,
-        }));
-        setData(res);
-        createJSONFile('NewForm', result);
-        await AsyncStorage.setItem('Form', 'saved');
-        getdata3(result);
-      })
-      .catch(error => {
-        console.log('erroryyyy', error);
-      });
-  };
-  const getdata3 = async res => {
-    let tk = await AsyncStorage.getItem('token');
-    setToken(tk);
-    setData(res);
-    res.map(async (item, ind) => {
-      if (item.c_type === 'select') {
-        setLoading(true);
-        var myHeaders = new Headers();
-        myHeaders.append('X-Access-Token', tk);
-
-        var formdata = new FormData();
-        formdata.append('t', strEncode(item.c_select_option_table));
-
-        var requestOptions = {
-          method: 'POST',
-          headers: myHeaders,
-          body: formdata,
-          redirect: 'follow',
-        };
-
-        fetch(
-          'https://3r4cace.pmis.app:1937/api/custom/selectall',
-          requestOptions,
-        )
-          .then(response => response.json())
-          .then(async result => {
-            let array = {
-              key: item.c_select_option_table,
-              data: result,
-            };
-            data3.push(array);
-            setData3([...data3]);
-            console.log(data3);
-            console.log('fkkff', data);
-
-            await AsyncStorage.setItem('Master', 'saved');
-
-            if (ind > 87) {
-              setLoading(false);
-              createJSONFile('Master', data3);
-            }
-          })
-          .catch(error => {
-            setLoading(false);
-            console.log('error', error);
-          });
-      }
-    });
-  };
+  function containsOnlyCharacters(str) {
+    return /^[A-Za-z]+$/.test(str);
+  }
+  function isNumberString(str) {
+    return /^[0-9]+$/.test(str);
+  }
   function isValidJSON(jsonString) {
     try {
       JSON.parse(jsonString);
@@ -465,6 +416,11 @@ function MemberSurvey({navigation, route}) {
     let t;
     let nav;
     let h;
+    if (fieldn) {
+      data[fieldn].c_dependent_target_field = moment(new Date()).format(
+        'YYYY-MM-DD hh:mm:ss',
+      );
+    }
     for (let i = 0; i <= data.length - 1; i++) {
       if (data[i].edit === true) {
         if (data[i].validation) {
@@ -525,14 +481,20 @@ function MemberSurvey({navigation, route}) {
           if (valis) {
             if (
               valis?.validation?.is_blank &&
-              data[i].c_dependent_target_field === ''
+              data[i].c_dependent_target_field === '' &&
+              data[i].edit === true
             ) {
               data[i].valmsg = 'Please enter something';
             } else if (
               valis?.validation?._is_only_text &&
               data[i].c_dependent_target_field
             ) {
-              var isTextNaN = isNaN(data[i].c_dependent_target_field);
+              let character = data[i].c_dependent_target_field.replace(
+                /\s/g,
+                '',
+              );
+              var isTextNaN = containsOnlyCharacters(character);
+
               console.log('jjjjj', isTextNaN);
               if (isTextNaN === false) {
                 data[i].valmsg = 'Please enter only text';
@@ -546,18 +508,23 @@ function MemberSurvey({navigation, route}) {
               let num =
                 valis?.validation?.number_range?.validation_check
                   ?.validation_fields;
-              let num2 = Number(data[i].c_dependent_target_field);
-
-              if (num?.from) {
-                if (num2 > Number(num?.from) && num2 < Number(num?.upto)) {
-                  data[i].valmsg = '';
-                } else {
-                  data[i].valmsg =
-                    'Number range should be from ' +
-                    num.from +
-                    ' to ' +
-                    num.upto;
+              let nnum = data[i].c_dependent_target_field;
+              let isnum = isNumberString(nnum);
+              if (isnum) {
+                let num2 = Number(nnum);
+                if (num?.from) {
+                  if (num2 >= Number(num?.from) && num2 <= Number(num?.upto)) {
+                    data[i].valmsg = '';
+                  } else {
+                    data[i].valmsg =
+                      'Number range should be from ' +
+                      num.from +
+                      ' to ' +
+                      num.upto;
+                  }
                 }
+              } else {
+                data[i].valmsg = 'Please enter only numbers';
               }
             } else if (
               valis?.validation?.if_valid_value &&
@@ -578,6 +545,8 @@ function MemberSurvey({navigation, route}) {
               } else {
                 data[index].valmsg = '';
               }
+            } else if (data[i].edit === false) {
+              data[i].valmsg = '';
             } else {
               data[i].valmsg = '';
             }
@@ -608,7 +577,7 @@ function MemberSurvey({navigation, route}) {
       newarray.push(date);
       let arrays = subforms.concat(newarray);
       setSubforms(arrays);
-
+      setName('');
       if (time) {
         if (time !== 1) {
           setTime(time - 1);
@@ -621,7 +590,7 @@ function MemberSurvey({navigation, route}) {
           Alert.alert(`Saved form for family member ${num}`);
         } else {
           await AsyncStorage.setItem('subform', JSON.stringify(arrays));
-          await AsyncStorage.setItem('hhid', JSON.stringify(selecthhid));
+          // await AsyncStorage.setItem('hhid', JSON.stringify(selecthhid));
           createJSONFile(date.date, array);
           navigation.navigate('Surveys');
         }
@@ -655,9 +624,11 @@ function MemberSurvey({navigation, route}) {
           title2={item.c_display_name}
           drop={item.state}
           onPress={() => {
-            data[index].state = true;
+            if (item.edit === true) {
+              data[index].state = true;
 
-            setData([...data]);
+              setData([...data]);
+            }
           }}
           onCancel={() => {
             data[index].state = !data[index].state;
@@ -665,24 +636,28 @@ function MemberSurvey({navigation, route}) {
           }}
           onConfirm={date => {
             var newdate = moment(date).format('YYYY-MM-DD');
-            let parseData = JSON.parse(data[index].vali);
-            if (parseData?.event?.get_year_from_date) {
-              console.log(
-                'dkdk',
-                parseData?.event?.get_year_from_date?.return_field?.value,
-              );
-              let field =
-                parseData?.event?.get_year_from_date?.return_field?.value;
-              let inde = data.findIndex(n => n.c_field_name === field);
-              var now = moment();
-              var dateOfBirth = moment(date).format('YYYY-MM-DD');
-              var birthDate = moment(dateOfBirth);
+            if (data[index]?.vali) {
+              let parseData = JSON.parse(data[index].vali);
+              console.log(parseData.validation.event);
+              if (parseData?.validation?.event?.get_year_from_date) {
+                console.log(
+                  'dkdk',
+                  parseData?.validation?.event?.get_year_from_date?.return_field
+                    ?.value,
+                );
+                let field =
+                  parseData?.validation?.event?.get_year_from_date?.return_field
+                    ?.value;
+                let inde = data.findIndex(n => n.c_field_name === field);
+                var now = moment();
+                var dateOfBirth = moment(date).format('YYYY-MM-DD');
+                var birthDate = moment(dateOfBirth);
 
-              var age = now.diff(birthDate, 'years');
-              console.log(age);
-              data[inde].c_dependent_target_field = String(age);
+                var age = now.diff(birthDate, 'years');
+                console.log(age);
+                data[inde].c_dependent_target_field = String(age);
+              }
             }
-
             data[index].c_dependent_target_field = newdate;
             setData([...data]);
             data[index].state = !data[index].state;
@@ -698,6 +673,8 @@ function MemberSurvey({navigation, route}) {
           }
           vali={item.vali}
           valmsg={item.edit ? item?.valmsg : ''}
+          edit={item.edit}
+          help={item?.validationfl1}
         />
       );
     } else if (
@@ -712,9 +689,14 @@ function MemberSurvey({navigation, route}) {
           placeholder={'Enter Text here ...'}
           onChangeText={txt => {
             data[index].c_dependent_target_field = txt;
-            let parseData = JSON.parse(data[index].vali);
-            if (parseData?.event) {
-              console.log('dkdk', parseData?.event);
+            if (data[index]?.vali) {
+              console.log(data[index].vali);
+              let parseData = JSON.parse(data[index].vali);
+              if (parseData?.event) {
+                if (parseData?.event?.display_in_title) {
+                  setName(txt);
+                }
+              }
             }
             setData([...data]);
           }}
@@ -722,6 +704,7 @@ function MemberSurvey({navigation, route}) {
           value={item.c_dependent_target_field}
           valmsg={item.edit ? item?.valmsg : ''}
           vali={item.vali}
+          help={item?.validationfl1}
         />
       );
     } else if (item.c_type === 'select') {
@@ -731,25 +714,47 @@ function MemberSurvey({navigation, route}) {
             <Text
               style={{
                 ...styles.titleinput2,
-                color: item.edit ? 'blue' : 'grey',
+                color: item.edit ? 'blue' : 'orange',
               }}>
               {item.c_display_name}
             </Text>
+            {item?.validationfl1 && (
+              <Text
+                style={{
+                  ...styles.titleinput2,
+                  color: item.edit ? 'green' : 'orange',
+                }}>
+                {item.validationfl1}
+              </Text>
+            )}
             <TouchableComponent
               style={styles.textinput2}
               onPress={() => {
+                let parseData;
+
+                if (item?.validation) {
+                  parseData = JSON.parse(item.validation);
+                }
+
                 if (item?.edit === true) {
-                  if (item.c_field_name === 'c_hh_id') {
+                  console.log(JSON.stringify(parseData));
+
+                  if (
+                    parseData?.validation?.get_data?.get_array?.array_name ===
+                    arrayname
+                  ) {
                     let data = selecthhid.map(n => ({
                       c_name: n,
                     }));
                     setLabel('c_name');
                     setDrop(data);
-                  } else if (
-                    item.c_field_name === 'n_father' ||
-                    item.c_field_name === 'n_mother' ||
-                    item.c_field_name === 'n_spouse'
-                  ) {
+                  } else if (parseData?.validation?.get_data?.get_array) {
+                    let data = farray.map(n => ({
+                      c_name: n,
+                    }));
+                    setLabel('c_name');
+                    setDrop(data);
+                  } else if (item.c_field_name === 'c_spouse') {
                     let data = farray.map(n => ({
                       c_name: n,
                     }));
@@ -762,7 +767,12 @@ function MemberSurvey({navigation, route}) {
                     let data2 = data3?.find(
                       n => n.key === item.c_select_option_table,
                     )?.data;
-
+                    if (parseData?.validation?._filter_list?.filter_data) {
+                      let fieldName =
+                        parseData?.validation?._filter_list?.filter_data
+                          ?.filter_column?._field_name_1;
+                      data2 = data2.filter(n => n.n_gp == gp);
+                    }
                     label = item.c_select_option_col_name;
 
                     setLabel(label);
@@ -777,7 +787,9 @@ function MemberSurvey({navigation, route}) {
                   width: screenWidth / 1.26,
                   color: item.c_dependent_target_field.c_name
                     ? Colors.black
-                    : Colors.plhdr,
+                    : item.edit
+                    ? Colors.plhdr
+                    : 'orange',
                   left: 10,
                 }}>
                 {item.c_dependent_target_field.c_name
@@ -801,7 +813,7 @@ function MemberSurvey({navigation, route}) {
                 <VectorIcon
                   name={'down'}
                   size={20}
-                  color={item.edit ? 'black' : 'grey'}
+                  color={item.edit ? 'black' : 'orange'}
                   groupName={'AntDesign'}
                 />
               )}
@@ -818,7 +830,22 @@ function MemberSurvey({navigation, route}) {
       return (
         <>
           <View style={{marginBottom: 14}}>
-            <Text style={styles.titleinput2}>{item.c_display_name}</Text>
+            <Text
+              style={{
+                ...styles.titleinput2,
+                color: item.edit ? 'black' : 'orange',
+              }}>
+              {item.c_display_name}
+            </Text>
+            {item?.validationfl1 && (
+              <Text
+                style={{
+                  ...styles.titleinput2,
+                  color: item.edit ? 'green' : 'orange',
+                }}>
+                {item.validationfl1}
+              </Text>
+            )}
             <TouchableComponent
               style={styles.textinput2}
               onPress={() => {
@@ -860,6 +887,7 @@ function MemberSurvey({navigation, route}) {
           value={item.c_dependent_target_field}
           valmsg={item.edit ? item?.valmsg : ''}
           vali={item.vali}
+          help={item?.validationfl1}
         />
       );
     } else if (item.c_type === 'label') {
@@ -893,16 +921,20 @@ function MemberSurvey({navigation, route}) {
         <KeyboardAwareScrollView>
           <Header2
             title="Survey Form"
+            enabled={enabled}
             onPress={() => {
-              navigation.goBack();
+              setModal1(true);
             }}
           />
           <AppText style={{color: 'white', marginLeft: 15}}>
             {route.params.name}
-            {'   '}Family Member -{' '}
-            {String(Number(route.params.times) - (time - 1))}/
-            {route.params.times}
           </AppText>
+
+          <AppText style={{color: 'white', marginLeft: 15, fontSize: 22}}>
+            {name} {String(Number(route.params.times) - (time - 1))}/
+            {route.params.times} family members
+          </AppText>
+
           <View
             style={{
               width: screenWidth / 1.05,
@@ -912,7 +944,7 @@ function MemberSurvey({navigation, route}) {
               borderRadius: 6,
               paddingTop: 20,
             }}>
-            {data.length !== 0 && data3.length !== 0 ? (
+            {data.length !== 0 ? (
               <FlatList ref={flatListRef} data={data} renderItem={RenderItem} />
             ) : null}
 
@@ -949,111 +981,178 @@ function MemberSurvey({navigation, route}) {
                   item.c_name = item[label];
                   data[index].c_dependent_target_field = item;
                   console.log(data[index].c_dependent_target_field);
-                  if (data[index].c_field_name === 'n_member_migrated') {
-                    let parseData = JSON.parse(data[index].vali);
-                    console.log(parseData.event.disable_if.disable_fields);
-                    let field =
-                      parseData?.event?.disable_if?.disable_check?._field_1;
-                    let fieldn =
-                      parseData?.event?.disable_if?.disable_check
-                        ?._field_grater_then;
-                    let i = data.findIndex(n => n.c_field_name === field);
-                    let field2 = data[i].c_dependent_target_field;
-
-                    if (field2 > Number(fieldn)) {
-                      let darray = parseData.event.disable_if.disable_fields;
-                      for (let j = 0; j <= darray.length - 1; j++) {
-                        let ji = data.findIndex(
-                          n => n.c_field_name === darray[j]._field_name,
-                        );
-                        data[ji].edit = false;
-                        data[ji].valmsg = '';
-                      }
-                    } else {
-                      let darray = parseData.event.disable_if.disable_fields;
-                      for (let j = 0; j <= darray.length - 1; j++) {
-                        let ji = data.findIndex(
-                          n => n.c_field_name === darray[j]._field_name,
-                        );
-                        data[ji].edit = true;
-                      }
-                    }
-                  } else {
-                    let parseData = JSON.parse(data[index].vali);
-
-                    if (parseData?.event?.disable_if?.disable_check) {
+                  if (data[index]?.vali) {
+                    if (data[index].c_field_name === 'c_mother_occupationdd') {
+                      let parseData = JSON.parse(data[index].vali);
+                      console.log(parseData.event.disable_if.disable_fields);
                       let field =
                         parseData?.event?.disable_if?.disable_check?._field_1;
                       let fieldn =
                         parseData?.event?.disable_if?.disable_check
-                          ?._field_equal_to;
+                          ?._field_grater_then;
                       let i = data.findIndex(n => n.c_field_name === field);
-                      let field2 = data[i].c_dependent_target_field.c_name;
-                      console.log(field2);
-                      console.log(fieldn);
-                      if (field2 === fieldn) {
-                        let darray =
-                          parseData?.event?.disable_if?.disable_fields;
+                      let field2 = data[i].c_dependent_target_field;
+
+                      if (field2 > Number(fieldn)) {
+                        let darray = parseData.event.disable_if.disable_fields;
                         for (let j = 0; j <= darray.length - 1; j++) {
                           let ji = data.findIndex(
                             n => n.c_field_name === darray[j]._field_name,
                           );
-                          data[ji].edit = false;
-                          data[ji].valmsg = '';
+                          if (ji !== -1) {
+                            data[ji].edit = false;
+                            data[ji].valmsg = '';
+                          }
                         }
-                        console.log(true);
-                      }
-                    }
-                    if (parseData?.event?.enable_if?.enable_check) {
-                      let field =
-                        parseData?.event?.enable_if?.enable_check?._field_1;
-                      let fieldn =
-                        parseData?.event?.enable_if?.enable_check
-                          ?._field_equal_to;
-                      let i = data.findIndex(n => n.c_field_name === field);
-                      let field2 = data[i]?.c_dependent_target_field?.c_name;
-                      if (field2 === fieldn) {
-                        let darray = parseData?.event?.enable_if?.enable_fields;
+                      } else {
+                        let darray = parseData.event.disable_if.disable_fields;
                         for (let j = 0; j <= darray.length - 1; j++) {
                           let ji = data.findIndex(
                             n => n.c_field_name === darray[j]._field_name,
                           );
-                          data[ji].edit = true;
+                          console.log(
+                            'disablefields',
+                            ji,
+                            darray[j]._field_name,
+                          );
+                          if (ji !== -1) {
+                            data[ji].edit = true;
+                          }
                         }
-                        console.log(true);
+                      }
+                    } else {
+                      console.log('sksksksss', data[index].vali);
+                      let parseData = JSON.parse(data[index].vali);
+
+                      if (parseData?.event?.disable_if?.disable_check) {
+                        let field =
+                          parseData?.event?.disable_if?.disable_check?._field_1;
+                        let fieldn =
+                          parseData?.event?.disable_if?.disable_check
+                            ?._field_equal_to;
+                        let i = data.findIndex(n => n.c_field_name === field);
+                        let field2 = data[i].c_dependent_target_field.c_name;
+                        console.log(field2);
+                        console.log(fieldn);
+
+                        if (field2 === fieldn) {
+                          let darray =
+                            parseData?.event?.disable_if?.disable_fields;
+                          for (let j = 0; j <= darray.length - 1; j++) {
+                            let ji = data.findIndex(
+                              n => n.c_field_name === darray[j]._field_name,
+                            );
+                            data[ji].edit = false;
+                            data[ji].valmsg = '';
+                          }
+                          console.log(true);
+                        }
+                      }
+                      if (parseData?.event?.enable_if?.enable_check) {
+                        console.log(
+                          'dkdkkkdkdk',
+                          JSON.stringify(parseData?.event),
+                        );
+                        let field =
+                          parseData?.event?.enable_if?.enable_check?._field_1;
+                        let fieldn =
+                          parseData?.event?.enable_if?.enable_check
+                            ?._field_equal_to;
+                        let i = data.findIndex(n => n.c_field_name === field);
+                        let field2 = data[i]?.c_dependent_target_field?.c_name;
+                        if (field2 === fieldn) {
+                          let darray =
+                            parseData?.event?.enable_if?.enable_fields;
+                          for (let j = 0; j <= darray.length - 1; j++) {
+                            let ji = data.findIndex(
+                              n => n.c_field_name === darray[j]._field_name,
+                            );
+                            data[ji].edit = true;
+                            console.log('clled');
+                          }
+                          console.log(true);
+                        }
                       }
                     }
-                  }
-                  let parseData = JSON.parse(data[index].vali);
-                  if (parseData?.event?.multi_enable_disable) {
-                    let schearray = parseData?.event?.multi_enable_disable;
-                    for (let s = 0; s <= schearray.length - 1; s++) {
-                      let field = schearray[s];
-                      let fieldName = field[0]?.field_name;
-                      let fieldn = field[0]?.equal_to;
-                      let i = data.findIndex(n => n.c_field_name === fieldName);
+                    let parseData = JSON.parse(data[index].vali);
+                    if (parseData?.event?.multi_enable_disable) {
+                      let schearray = parseData?.event?.multi_enable_disable;
+                      console.log('dnjdjjdj', schearray);
+                      for (let s = 0; s <= schearray.length - 1; s++) {
+                        let field = schearray[s];
+                        let fieldName = field[0]?.field_name;
+                        let fieldn = field[0]?.equal_to;
+                        let fieldis = field[0]?.between_nos;
+                        console.log('djjdjd', fieldis);
+                        let i = data.findIndex(
+                          n => n.c_field_name === fieldName,
+                        );
 
-                      let field2 = data[i]?.c_dependent_target_field?.c_name;
-
-                      if (fieldn === field2) {
-                        let darray = field[0]?.enable_fields;
-                        let earray = field[0]?.disable_fields;
-                        for (let j = 0; j <= darray.length - 1; j++) {
-                          let ji = data.findIndex(
-                            n =>
-                              n.c_select_option_table === darray[j]._field_name,
-                          );
-                          data[ji].edit = true;
+                        let field2 = data[i]?.c_dependent_target_field?.c_name;
+                        if (fieldn) {
+                          if (fieldn === field2) {
+                            let darray = field[0]?.enable_fields;
+                            let earray = field[0]?.disable_fields;
+                            console.log('jsjjs', earray);
+                            for (let j = 0; j <= darray.length - 1; j++) {
+                              let ji = data.findIndex(
+                                n => n.c_field_name === darray[j]._field_name,
+                              );
+                              data[ji].edit = true;
+                            }
+                            for (let e = 0; e <= earray.length - 1; e++) {
+                              let ef = data.findIndex(
+                                n => n.c_field_name === earray[e]._field_name,
+                              );
+                              console.log('index', ef);
+                              data[ef].edit = false;
+                              data[ef].valmsg = '';
+                            }
+                          }
                         }
-                        for (let e = 0; e <= earray.length - 1; e++) {
-                          let ef = data.findIndex(
-                            n =>
-                              n.c_select_option_table === earray[e]._field_name,
-                          );
+                        if (fieldis) {
+                          let field3 = data[i]?.c_dependent_target_field;
+                          let num1 = fieldis.split(',')[0];
+                          let num2 = fieldis.split(',')[1];
 
-                          data[ef].edit = false;
+                          if (
+                            Number(field3) >= Number(num1) &&
+                            Number(field3) <= Number(num2)
+                          ) {
+                            let darray = field[0]?.enable_fields;
+                            let earray = field[0]?.disable_fields;
+                            for (let j = 0; j <= darray.length - 1; j++) {
+                              let ji = data.findIndex(
+                                n => n.c_field_name === darray[j]._field_name,
+                              );
+                              data[ji].edit = true;
+                            }
+                            for (let e = 0; e <= earray.length - 1; e++) {
+                              let ef = data.findIndex(
+                                n => n.c_field_name === earray[e]._field_name,
+                              );
+
+                              data[ef].edit = false;
+                              data[ef].valmsg = '';
+                            }
+                          }
                         }
                       }
+                    }
+                    if (parseData?._fill_timestamp) {
+                      let fieldName =
+                        parseData?._fill_timestamp?.fill_timestamp
+                          ?._fill_in_fileds._field_name_1;
+                      let index = data.findIndex(
+                        n => n.c_field_name === fieldName,
+                      );
+                      if (fieldName) {
+                        setfieldn(index);
+                        data[index].c_dependent_target_field = moment(
+                          new Date(),
+                        ).format('YYYY-MM-DD hh:mm:ss');
+                      }
+                      console.log(JSON.stringify(parseData?._fill_timestamp));
                     }
                   }
                   setData([...data]);
@@ -1073,6 +1172,8 @@ function MemberSurvey({navigation, route}) {
         </RBSheet>
         <Modl
           isVisible={modal}
+          yes="Okay"
+          no="Cancel"
           onyespress={async () => {
             setModal(false);
             // let newarray = [];
@@ -1110,6 +1211,21 @@ function MemberSurvey({navigation, route}) {
             setModal(false);
           }}
           Title={'Please add all the mandatory details'}
+        />
+        <Modl
+          isVisible={modal1}
+          yes="Yes"
+          no="No"
+          onyespress={async () => {
+            setModal1(false);
+            navigation.goBack();
+          }}
+          onnopress={() => {
+            setModal1(false);
+          }}
+          Title={
+            'Are you sure you want to leave this page, data will be lost if you will leave this page'
+          }
         />
       </SafeAreaView>
     </View>
