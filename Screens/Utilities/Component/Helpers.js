@@ -175,7 +175,7 @@ export function Header2({onPress, title}) {
           width: screenWidth / 3.4,
           height: screenWidth / 4.8,
           alignSelf: 'center',
-          borderRadius: 15,
+          resizeMode: 'contain',
           marginTop: Platform.OS === 'android' ? 15 : 15,
         }}
       />

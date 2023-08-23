@@ -16,11 +16,11 @@ const styles = StyleSheet.create({
     height: 106,
     marginBottom: 14,
   },
-    headrbtn: {
+  headrbtn: {
     height: 24,
     width: 90,
     alignSelf: 'center',
-    marginRight: 10,
+    marginRight: 5,
     justifyContent: 'center',
     backgroundColor: Colors.mainColor,
     borderRadius: 13,

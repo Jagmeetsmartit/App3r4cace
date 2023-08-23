@@ -88,7 +88,7 @@ function Loading({navigation}) {
       </TouchableComponent>
       <TouchableComponent
         onPress={() => {
-          navigation.navigate('Feedback');
+          navigation.navigate('CompleteSurvey');
         }}
         style={{
           height: 45,

@@ -95,12 +95,13 @@ function SignIn(props) {
             <ImageComponent
               source={require('../Utilities/Images/logoo.png')}
               style={{
-                width: screenWidth / 1.8,
+                width: screenWidth / 3,
                 height: screenWidth / 2.8,
                 alignSelf: 'center',
                 resizeMode: 'contain',
                 marginBottom: 25,
-                borderRadius: 15,
+                // backgroundColor: 'white',
+
                 marginTop: Platform.OS === 'android' ? 30 : 20,
               }}
             />

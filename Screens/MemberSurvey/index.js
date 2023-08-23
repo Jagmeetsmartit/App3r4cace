@@ -842,7 +842,7 @@ function MemberSurvey({navigation, route}) {
             <Text
               style={{
                 ...styles.titleinput2,
-                color: item.edit ? 'black' : 'orange',
+                color: item.edit ? 'blue' : 'orange',
               }}>
               {item.c_display_name}
             </Text>

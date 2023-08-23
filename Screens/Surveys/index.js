@@ -7,6 +7,7 @@ import {
   Text,
   BackHandler,
   Alert,
+  ScrollView,
 } from 'react-native';
 import {
   CommonInput,
@@ -29,7 +30,24 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useFocusEffect} from '@react-navigation/native';
 import {Colors} from '../Utilities/Component/Colors';
 import {strEncode} from '../Utilities/Component/encrptm';
-
+const Modl = ({isVisible, onyespress, onnopress, Title}) => {
+  return (
+    <Modal isVisible={isVisible}>
+      <View style={styles.modal2}>
+        {/* <Text style={styles.modaltxt1}>Are you Sure?</Text>
+        <Text style={styles.modaltxt2}>
+          You are trying to upload incomplete data file to server
+        </Text> */}
+        <Text style={styles.modaltxt2}>{Title}</Text>
+        <View style={{flexDirection: 'row', justifyContent: 'space-evenly'}}>
+          <TouchableComponent style={styles.modalbtn} onPress={onyespress}>
+            <Text style={styles.modalbtntxt}>Okay</Text>
+          </TouchableComponent>
+        </View>
+      </View>
+    </Modal>
+  );
+};
 const Listitem = ({onPress, title, name, gname, size}) => {
   return (
     <TouchableComponent
@@ -57,6 +75,8 @@ const Listitem = ({onPress, title, name, gname, size}) => {
 function Surveys({navigation}) {
   const [swich, setSwich] = useState(0);
   const [logoutmodal, setLogoutmodal] = useState(false);
+  const [modal, setModal] = useState(false);
+  const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [token, setToken] = useState('');
   const [exptk, setExptk] = useState(false);
@@ -288,26 +308,28 @@ function Surveys({navigation}) {
             </Text>
           </>
         )}
-        <ImageComponent
-          source={require('../Utilities/Images/logoo.png')}
-          style={{
-            width: screenWidth / 1.8,
-            height: screenWidth / 2.8,
-            alignSelf: 'center',
-            marginBottom: 25,
-            borderRadius: 15,
-            marginTop: Platform.OS === 'android' ? 30 : 20,
-          }}
-        />
-        <View
-          style={{
-            width: screenWidth / 1.05,
-            height: screenHeight / 1.45,
-            backgroundColor: Colors.Background,
-            alignSelf: 'center',
-            borderRadius: 6,
-          }}>
-          {/* <View style={styles.btnview}>
+        <ScrollView>
+          <ImageComponent
+            source={require('../Utilities/Images/logoo.png')}
+            style={{
+              width: screenWidth / 3.8,
+              height: screenWidth / 3.8,
+              alignSelf: 'center',
+              marginBottom: 25,
+
+              resizeMode: 'contain',
+              marginTop: Platform.OS === 'android' ? 30 : 20,
+            }}
+          />
+          <View
+            style={{
+              width: screenWidth / 1.05,
+              minHeight: screenHeight / 1.5,
+              backgroundColor: Colors.Background,
+              alignSelf: 'center',
+              borderRadius: 6,
+            }}>
+            {/* <View style={styles.btnview}>
             <TouchableComponent
               onPress={() => {
                 setSwich(0);
@@ -341,8 +363,8 @@ function Surveys({navigation}) {
               </Text>
             </TouchableComponent>
           </View> */}
-          <Text style={styles.title}> Please select menu option</Text>
-          <View style={{flexDirection: 'row', justifyContent: 'space-evenly'}}>
+            <Text style={styles.title}> Please select menu option</Text>
+
             <TouchableComponent
               style={styles.startview}
               onPress={() => {
@@ -350,27 +372,57 @@ function Surveys({navigation}) {
               }}>
               <ImageComponent
                 source={require('../Utilities/Images/complete.png')}
-                style={{width: 42, height: 47}}
+                style={{width: 42, height: 47, resizeMode: 'contain'}}
               />
               <Text> Saved Data Forms</Text>
             </TouchableComponent>
-          </View>
-          <TouchableComponent
-            onPress={() => {
-              navigation.navigate('SurveyList');
-            }}
-            style={styles.startview}>
-            <ImageComponent
-              source={require('../Utilities/Images/start.png')}
-              style={{width: 38, height: 50}}
+
+            <TouchableComponent
+              onPress={() => {
+                navigation.navigate('SurveyList');
+              }}
+              style={styles.startview}>
+              <ImageComponent
+                source={require('../Utilities/Images/start.png')}
+                style={{width: 42, height: 47, resizeMode: 'contain'}}
+              />
+              <Text>Start a new Data Form</Text>
+            </TouchableComponent>
+            <TouchableComponent
+              style={styles.startview}
+              onPress={() => {
+                setModal(true);
+                setMessage(
+                  'Data uploaded may be under verification. Please check again',
+                );
+              }}>
+              <ImageComponent
+                source={require('../Utilities/Images/status.png')}
+                style={{width: 42, height: 47, resizeMode: 'contain'}}
+              />
+              <Text> Upload Data Status</Text>
+            </TouchableComponent>
+
+            <TouchableComponent
+              onPress={() => {
+                setModal(true);
+                setMessage(
+                  'No feedback sent by Project Team on Reported data. Please check again',
+                );
+              }}
+              style={styles.startview}>
+              <ImageComponent
+                source={require('../Utilities/Images/feedback.png')}
+                style={{width: 42, height: 47, resizeMode: 'contain'}}
+              />
+              <Text>Feedback on Reported Data</Text>
+            </TouchableComponent>
+            <TextBtncomponent
+              title={'LOGOUT'}
+              onPress={() => setLogoutmodal(true)}
             />
-            <Text>Start a new Data Form</Text>
-          </TouchableComponent>
-          <TextBtncomponent
-            title={'LOGOUT'}
-            onPress={() => setLogoutmodal(true)}
-          />
-        </View>
+          </View>
+        </ScrollView>
         <Modal isVisible={logoutmodal}>
           <View style={styles.modal}>
             <Text style={styles.modaltxt1}>Come Back Soon !</Text>
@@ -397,6 +449,13 @@ function Surveys({navigation}) {
             </View>
           </View>
         </Modal>
+        <Modl
+          isVisible={modal}
+          onyespress={() => {
+            setModal(false);
+          }}
+          Title={message}
+        />
       </SafeAreaView>
     </View>
   );

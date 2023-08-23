@@ -8,6 +8,7 @@ import Survey from './Screens/Surveys';
 import Loading from './Screens/Loading';
 import SurveyList from './Screens/SurveyList';
 import CompleteSurvey from './Screens/CompleteSurvey';
+import Info from './Screens/Info';
 import IncompleteSurvey from './Screens/IncompleteSurvey';
 import MemberSurvey from './Screens/MemberSurvey';
 import Multiform from './Screens/Multiform';
@@ -39,6 +40,11 @@ const App = () => {
           <Stack.Screen
             name="SignIn"
             component={SignIn}
+            options={{headerShown: false}}
+          />
+          <Stack.Screen
+            name="Info"
+            component={Info}
             options={{headerShown: false}}
           />
           <Stack.Screen
@@ -86,7 +92,7 @@ const App = () => {
             component={EditSurvey}
             options={{headerShown: false}}
           />
-             <Stack.Screen
+          <Stack.Screen
             name="Feedback"
             component={Feedback}
             options={{headerShown: false}}

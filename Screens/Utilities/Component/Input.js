@@ -59,7 +59,7 @@ export function Input({
         style={{...styles.textinput, color: editable ? 'black' : 'orange'}}
         onChangeText={onChangeText}
         value={value}
-        placeholderTextColor={editable ? 'black' : 'orange'}
+        placeholderTextColor={editable ? 'grey' : 'orange'}
         placeholder={placeholder}
         keyboardType={keyboardType}
         maxLength={maxLength}
@@ -205,7 +205,7 @@ export function DateInputBtn({
       )}
       <TouchableComponent style={styles.textinput2} onPress={onPress}>
         <Text
-          style={{width: screenWidth / 1.26, color: edit ? 'black' : 'orange'}}>
+          style={{width: screenWidth / 1.26, color: edit ? 'grey' : 'orange'}}>
           {text}
         </Text>
         {drop ? (

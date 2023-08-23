@@ -16,6 +16,7 @@ import {
   screenWidth,
   screenHeight,
   TouchableComponent,
+  Header2,
 } from '../Utilities/Component/Helpers';
 import styles from './style';
 import Modal from 'react-native-modal';
@@ -259,16 +260,10 @@ function SignIn(props) {
         {loading ? <Loadingcomponent /> : null}
         <View>
           <KeyboardAwareScrollView>
-            <ImageComponent
-              source={require('../Utilities/Images/logoo.png')}
-              style={{
-                width: screenWidth / 1.8,
-                height: screenWidth / 2.8,
-                alignSelf: 'center',
-                resizeMode: 'contain',
-                marginBottom: 25,
-                borderRadius: 15,
-                marginTop: Platform.OS === 'android' ? 30 : 20,
+            <Header2
+              title=""
+              onPress={() => {
+                props.navigation.goBack();
               }}
             />
             <View
@@ -348,7 +343,7 @@ function SignIn(props) {
                       <AppText
                         style={{
                           width: screenWidth / 1.26,
-                          color: Colors.black,
+                          color: 'grey',
 
                           left: 10,
                         }}>

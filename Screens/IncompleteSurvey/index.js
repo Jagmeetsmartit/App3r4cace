@@ -325,6 +325,7 @@ function IncompleteSurvey({navigation}) {
         n => n.c_form_name === item.c_form_name,
       )?.c_enable_edit;
       console.log(enabled);
+      let len = forms[id]?.sub?.length;
       if (item?.c_field_name === ite.data[0]?.c_field_name) {
         return (
           <View style={styles.mainview}>
@@ -335,9 +336,12 @@ function IncompleteSurvey({navigation}) {
               <Text style={{fontWeight: '600', fontSize: 19, marginBottom: 5}}>
                 {item?.c_form_name}
               </Text>
-              <Text style={{fontWeight: '300', fontSize: 12, marginBottom: 5}}>
-                Sub forms -{forms[id]?.sub?.length}
-              </Text>
+              {len && (
+                <Text
+                  style={{fontWeight: '300', fontSize: 12, marginBottom: 5}}>
+                  Sub forms -{forms[id]?.sub?.length}
+                </Text>
+              )}
               {/* <Text>{item?.c_dependent_target_field}</Text> */}
             </View>
             <View
@@ -390,7 +394,7 @@ function IncompleteSurvey({navigation}) {
     <View style={{backgroundColor: Colors.backcolor, flex: 1}}>
       <SafeAreaView>
         <Header2
-          title="Saved Survey"
+          title="Saved Data Forms "
           onPress={() => {
             navigation.navigate('Surveys');
           }}
@@ -399,20 +403,39 @@ function IncompleteSurvey({navigation}) {
           style={{
             flexDirection: 'row',
             alignSelf: 'flex-end',
-            marginRight: 20,
+            marginRight: 10,
             marginTop: -30,
             marginBottom: 15,
           }}>
-          <TouchableComponent
-            onPress={() => {
-              uploadAll();
-            }}
-            style={styles.headrbtn}>
-            <AppText
-              style={{textAlign: 'center', color: 'white', fontSize: 16}}>
-              Upload All
-            </AppText>
-          </TouchableComponent>
+          {forms.length !== 0 ? (
+            <TouchableComponent
+              onPress={() => {
+                uploadAll();
+              }}
+              style={styles.headrbtn}>
+              <AppText
+                style={{textAlign: 'center', color: 'white', fontSize: 16}}>
+                Upload All
+              </AppText>
+            </TouchableComponent>
+          ) : (
+            <TouchableComponent
+              onPress={() => {
+                navigation.navigate('SurveyList');
+              }}
+              style={{...styles.headrbtn, width: screenWidth / 2.5}}>
+              <AppText
+                style={{
+                  textAlign: 'center',
+                  color: 'white',
+                  fontSize: 15,
+                  paddingLeft: 2,
+                  paddingRight: 2,
+                }}>
+                Start a New Data form
+              </AppText>
+            </TouchableComponent>
+          )}
         </View>
         <View
           style={{
@@ -423,16 +446,32 @@ function IncompleteSurvey({navigation}) {
             borderRadius: 6,
             paddingTop: 10,
           }}>
-          <FlatList
-            data={forms}
-            renderItem={({item, index}) => (
-              <View>
-                {item?.data.map(itm => {
-                  return render(itm, index, item);
-                })}
-              </View>
-            )}
-          />
+          {forms.length !== 0 ? (
+            <FlatList
+              data={forms}
+              renderItem={({item, index}) => (
+                <View>
+                  {item?.data.map(itm => {
+                    return render(itm, index, item);
+                  })}
+                </View>
+              )}
+            />
+          ) : (
+            <View
+              style={{
+                justifyContent: 'center',
+                alignSelf: 'center',
+                width: screenWidth / 1.2,
+                marginTop: 50,
+                fontSize: 16,
+              }}>
+              <Text style={{textAlign: 'center'}}>
+                No data entered by user for editing or syncing to server. Please
+                enter some data using "Start a New Data form" first.
+              </Text>
+            </View>
+          )}
         </View>
         <Modal isVisible={modal}>
           <View style={styles.modal}>
