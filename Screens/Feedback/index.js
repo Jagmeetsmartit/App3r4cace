@@ -38,9 +38,11 @@ const Modl = ({isVisible, onyespress, onnopress, Title, yes, no}) => {
           <TouchableComponent style={styles.modalbtn} onPress={onyespress}>
             <Text style={styles.modalbtntxt}>{yes}</Text>
           </TouchableComponent>
-          <TouchableComponent style={styles.modalbtn} onPress={onnopress}>
-            <Text style={styles.modalbtntxt}>{no}</Text>
-          </TouchableComponent>
+          {no && (
+            <TouchableComponent style={styles.modalbtn} onPress={onnopress}>
+              <Text style={styles.modalbtntxt}>{no}</Text>
+            </TouchableComponent>
+          )}
         </View>
       </View>
     </Modal>
@@ -48,7 +50,9 @@ const Modl = ({isVisible, onyespress, onnopress, Title, yes, no}) => {
 };
 function SignIn(props) {
   const [modal, setModal] = useState(false);
+  const [modal1, setModal1] = useState(false);
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [name, setName] = useState('');
   const [feed, setFeed] = useState('');
   const [lat, setLat] = useState('');
@@ -67,11 +71,19 @@ function SignIn(props) {
     if (name === '') {
       error.name = 'Name Is Required';
     }
+    if (email === '') {
+      error.email = 'Email Is Required';
+    } else if (emailPattern.test(email) === false) {
+      error.email = 'Email is Invalid';
+    }
+    if (phone === '') {
+      error.phone = 'Phone is Required';
+    }
     if (feed === '') {
       error.feed = 'Feedback is Required';
     }
     if (imp === '') {
-      error.imp = 'Improvements Is Required';
+      error.imp = 'Project Information Is Required';
     }
     if (Object.keys(error).length === 0) {
       submit();
@@ -208,6 +220,8 @@ function SignIn(props) {
     formdata.append('c_feedback', feed);
     formdata.append('d_date', date);
     formdata.append('c_improvement_points', imp);
+    formdata.append('c_phoneno', phone);
+    formdata.append('c_emailid', email);
     formdata.append('n_lat', lat);
     formdata.append('n_long', long);
     if (image) {
@@ -234,7 +248,7 @@ function SignIn(props) {
         setFeed('');
         setImp('');
         setImage('');
-        alert(JSON.stringify(result));
+        setModal1(true);
       })
       .catch(async error => {
         setLoading(false);
@@ -305,6 +319,28 @@ function SignIn(props) {
                   valmsg={error?.name}
                   value={name}
                   placeholder={'Enter Name'}
+                />
+                <Input
+                  title2="Phone"
+                  editable={true}
+                  keyboardType={'numeric'}
+                  maxLength={10}
+                  onChangeText={text => {
+                    setPhone(text);
+                  }}
+                  valmsg={error?.phone}
+                  value={phone}
+                  placeholder={'Enter Phone Number'}
+                />
+                <Input
+                  title2="Email"
+                  editable={true}
+                  onChangeText={text => {
+                    setEmail(text);
+                  }}
+                  valmsg={error?.email}
+                  value={email}
+                  placeholder={'Enter Email'}
                 />
                 <Input
                   title2="Project Information"
@@ -402,6 +438,17 @@ function SignIn(props) {
           }}
           Title={
             'Are you sure you want to leave this page, data will be lost if you will leave this page'
+          }
+        />
+        <Modl
+          isVisible={modal1}
+          yes="Okay"
+          onyespress={async () => {
+            setModal1(false);
+            props.navigation.goBack();
+          }}
+          Title={
+            'Thanks for providing feedback for 3R4CACE project activities. Team will get back through email for further details'
           }
         />
       </SafeAreaView>

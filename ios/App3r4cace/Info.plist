@@ -35,17 +35,17 @@
 			</dict>
 		</dict>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>3r4cace requires this permission to upload Images</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>3r4cace requires this permission to upload location of survey.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>3r4cace requires this permission to upload location of survey.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>3r4cace requires this permission to upload Images.</string>
-	<key>NSCameraUsageDescription</key>
-	<string>3r4cace requires this permission to upload Images</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>3r4cace requires this permission to upload Images.</string>
-		<key>UIAppFonts</key>
+	<key>UIAppFonts</key>
 	<array>
 		<string>AntDesign.ttf</string>
 		<string>Entypo.ttf</string>
